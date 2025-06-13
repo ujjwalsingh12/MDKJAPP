@@ -1,0 +1,97 @@
+
+
+--- START OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/config.py ---
+import os
+
+class Config:
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
+        f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev")
+--- END OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/config.py ---
+
+
+--- START OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/create.py ---
+import os
+
+def read_selected_files():
+    output_file = "console.txt"
+    current_dir = os.getcwd()
+    valid_extensions = {'.css', '.js', '.py'}
+
+    with open(output_file, 'w', encoding='utf-8') as out_f:
+        for foldername, subfolders, filenames in os.walk(current_dir):
+            for filename in filenames:
+                filepath = os.path.join(foldername, filename)
+
+                # Skip the output file itself
+                if os.path.abspath(filepath) == os.path.abspath(output_file):
+                    continue
+
+                # Check file extension
+                _, ext = os.path.splitext(filename)
+                if ext.lower() not in valid_extensions:
+                    continue
+
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        out_f.write(f"\n\n--- START OF FILE: {filepath} ---\n")
+                        out_f.write(f.read())
+                        out_f.write(f"\n--- END OF FILE: {filepath} ---\n")
+                except Exception as e:
+                    print(f"Skipping file {filepath}: {e}")
+
+if __name__ == '__main__':
+    read_selected_files()
+    print("Done. All .css, .js, and .py files written to 'console.txt'.")
+--- END OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/create.py ---
+
+
+--- START OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/wsgi.py ---
+from app import create_app
+
+app = create_app()
+--- END OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/wsgi.py ---
+
+
+--- START OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/app/models.py ---
+from . import db
+
+class Invoice(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    customer = db.Column(db.String(100))
+    amount = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+--- END OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/app/models.py ---
+
+
+--- START OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/app/__init__.py ---
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from config import Config
+
+db = SQLAlchemy()
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)  # loads from config.py
+    db.init_app(app)
+
+    from .routes import main  # assumes you have a routes.py with a Blueprint named main
+    app.register_blueprint(main)
+
+    return app
+--- END OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/app/__init__.py ---
+
+
+--- START OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/app/routes.py ---
+from flask import Blueprint, jsonify
+
+main = Blueprint("main", __name__)
+
+@main.route("/")
+def home():
+    return jsonify(message="Flask + PostgreSQL working")
+--- END OF FILE: /Users/ujjwalsingh/Development/MDKJ/MDKJAPP/gold-invoicing-app/backend/app/routes.py ---

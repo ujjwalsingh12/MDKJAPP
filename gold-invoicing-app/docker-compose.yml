@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: gold_pg
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecret
+      POSTGRES_DB: gold_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: gold_flask
+    env_file: .env
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5003:5003"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: gold_react
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules       # Prevent node_modules overwrite on host
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host
+    stdin_open: true
+    tty: true
+
+volumes:
+  pgdata:

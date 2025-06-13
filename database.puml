@@ -1,0 +1,79 @@
+@startuml
+!define primaryKey(x) <u>x</u>
+!define foreignKey(x) <i>x</i>
+skinparam linetype ortho
+
+entity "customer_details" {
+  primaryKey(gstin): VARCHAR
+  name: TEXT
+  contact: TEXT
+}
+
+entity "remarks" {
+  primaryKey(remark_id): SERIAL
+  foreignKey(gstin): VARCHAR
+  remark: TEXT
+}
+
+entity "bill" {
+  primaryKey(id): SERIAL
+  bill_no: TEXT
+  foreignKey(gstin): VARCHAR
+  purity: TEXT
+  wt: NUMERIC
+  rate: NUMERIC
+  cgst: NUMERIC
+  sgst: NUMERIC
+  igst: NUMERIC
+  dated: DATE
+  bank: BOOLEAN
+}
+
+entity "cash" {
+  primaryKey(id): SERIAL
+  foreignKey(gstin): VARCHAR
+  amount: NUMERIC
+  dated: DATE
+  bank: BOOLEAN
+}
+
+entity "gold" {
+  primaryKey(id): SERIAL
+  foreignKey(gstin): VARCHAR
+  purity: TEXT
+  weight: NUMERIC
+  dated: DATE
+  bank: BOOLEAN
+}
+
+entity "stock" {
+  primaryKey(id): SERIAL
+  foreignKey(gstin): VARCHAR
+  purity: TEXT
+  weight: NUMERIC
+  dated: DATE
+  bank: BOOLEAN
+}
+
+entity "journal" {
+  timestamp: TIMESTAMP
+  foreignKey(gstin): VARCHAR
+  entry_type: VARCHAR
+  entry_id: INT
+  amount: NUMERIC
+  dated: DATE
+  bank: BOOLEAN
+  foreignKey(remark_id): INT
+}
+
+' Relationships
+customer_details ||--o{ remarks : has
+customer_details ||--o{ bill : owns
+customer_details ||--o{ cash : owns
+customer_details ||--o{ gold : owns
+customer_details ||--o{ stock : owns
+customer_details ||--o{ journal : logs
+
+remarks ||--o{ journal : "used in"
+
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+start
+:Input parameters;
+note right
+p_entry_type, p_gstin, p_dated,
+p_remark_text, p_bill_no, etc.
+end note
+
+if (p_remark_text IS NOT NULL) then (yes)
+  :Insert into remarks;
+  :Get remark_id;
+else (no)
+  :remark_id = NULL;
+endif
+
+if (p_entry_type = 'bill') then (yes)
+  :Insert into bill;
+  :Compute amount = wt * rate;
+elseif (p_entry_type = 'cash') then (yes)
+  :Insert into cash;
+  :amount = cash_amount;
+elseif (p_entry_type = 'stock' or 'gold') then (yes)
+  :Insert into stock;
+  :amount = weight;
+elseif (p_entry_type = 'remarks') then (yes)
+  :entry_id = remark_id;
+  :amount = NULL;
+else
+  stop
+  :Raise EXCEPTION - unknown entry_type;
+endif
+
+:Insert into journal;
+:Return journal row (timestamp, entry_type, etc.);
+stop
+@enduml

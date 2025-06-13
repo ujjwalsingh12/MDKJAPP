@@ -1,0 +1,46 @@
+@startuml
+start
+
+:Input parameters;
+note right
+p_entry_type, p_entry_id,
+p_operation ('update'|'delete'),
+p_amount, p_remark_text
+end note
+
+if (p_remark_text IS NOT NULL) then (yes)
+  :Insert into remarks;
+  :Get remark_id;
+else (no)
+  :remark_id = NULL;
+endif
+
+if (p_entry_type = 'bill') then (yes)
+  :Get gstin from bill where id = p_entry_id;
+  if (p_operation = 'update') then (yes)
+    :UPDATE bill SET rate/amount;
+  endif
+  :Get amount;
+elseif (p_entry_type = 'cash') then (yes)
+  :Get gstin from cash where id = p_entry_id;
+  if (p_operation = 'update') then (yes)
+    :UPDATE cash SET amount;
+  endif
+  :Get amount;
+elseif (p_entry_type = 'stock' or p_entry_type = 'gold') then (yes)
+  :Get gstin from stock where id = p_entry_id;
+  if (p_operation = 'update') then (yes)
+    :UPDATE stock SET weight;
+  endif
+  :Get weight as amount;
+elseif (p_entry_type = 'remarks') then (yes)
+  :gstin = NULL;
+  :amount = NULL;
+else (no match)
+  stop
+  :RAISE EXCEPTION: invalid entry_type;
+endif
+
+:Insert into journal with modified entry_type (e.g., 'bill_update');
+stop
+@enduml
