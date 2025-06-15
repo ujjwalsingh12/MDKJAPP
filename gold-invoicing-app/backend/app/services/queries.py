@@ -1,50 +1,68 @@
+# services/queries.py
+
 from db import get_db_connection
 import pandas as pd
 
-def get_all_entries():
+def run_paginated_query(query, conn, params=(), page=1, page_size=20, sort_by=None, sort_order='asc'):
+    base_query = query.strip().rstrip(';')
+    if sort_by:
+        base_query += f" ORDER BY {sort_by} {sort_order.upper()}"
+    offset = (page - 1) * page_size
+    base_query += f" LIMIT {page_size} OFFSET {offset}"
+    df = pd.read_sql(base_query, conn, params=params)
+    return df.to_dict(orient="records")
+
+
+def get_table_data(table_name, page=1, page_size=20, sort_by=None, sort_order='asc', start_date=None, end_date=None):
     conn = get_db_connection()
-    df = pd.read_sql("SELECT * FROM journal", conn)
+    query = f"SELECT * FROM {table_name}"
+    params = []
+
+    if start_date and end_date:
+        query += " WHERE dated BETWEEN %s AND %s"
+        params.extend([start_date, end_date])
+
+    result = run_paginated_query(query, conn, params, page, page_size, sort_by, sort_order)
+    conn.close()
+    return result
+
+
+def get_data_by_gstin(table_name, gstin):
+    conn = get_db_connection()
+    df = pd.read_sql(f"SELECT * FROM {table_name} WHERE gstin = %s", conn, params=(gstin,))
     conn.close()
     return df.to_dict(orient="records")
 
 
-def get_entries_by_customer(gstin):
+def insert_record(table_name, data):
     conn = get_db_connection()
-    df = pd.read_sql("SELECT * FROM journal WHERE gstin = %s", conn, params=(gstin,))
+    cols = ', '.join(data.keys())
+    placeholders = ', '.join(['%s'] * len(data))
+    values = tuple(data.values())
+    query = f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})"
+
+    with conn:
+        conn.cursor().execute(query, values)
     conn.close()
-    return df.to_dict(orient="records")
+    return {"status": "success"}
 
 
-def get_summary_by_type():
+def update_record_by_id(table_name, record_id, data):
     conn = get_db_connection()
-    df = pd.read_sql("SELECT entry_type, COUNT(*) AS count FROM journal GROUP BY entry_type", conn)
+    set_clause = ', '.join([f"{k} = %s" for k in data.keys()])
+    values = list(data.values())
+    query = f"UPDATE {table_name} SET {set_clause} WHERE id = %s"
+    values.append(record_id)
+
+    with conn:
+        conn.cursor().execute(query, values)
     conn.close()
-    return df.to_dict(orient="records")
+    return {"status": "updated"}
 
 
-def get_all_bills():
+def delete_record_by_id(table_name, record_id):
     conn = get_db_connection()
-    df = pd.read_sql("SELECT * FROM bill", conn)
+    with conn:
+        conn.cursor().execute(f"DELETE FROM {table_name} WHERE id = %s", (record_id,))
     conn.close()
-    return df.to_dict(orient="records")
-
-
-def get_bills_by_customer(gstin):
-    conn = get_db_connection()
-    df = pd.read_sql("SELECT * FROM bill WHERE gstin = %s", conn, params=(gstin,))
-    conn.close()
-    return df.to_dict(orient="records")
-
-
-def get_all_cash():
-    conn = get_db_connection()
-    df = pd.read_sql("SELECT * FROM cash", conn)
-    conn.close()
-    return df.to_dict(orient="records")
-
-
-def get_customer_details(gstin):
-    conn = get_db_connection()
-    df = pd.read_sql("SELECT * FROM customer_details WHERE gstin = %s", conn, params=(gstin,))
-    conn.close()
-    return df.to_dict(orient="records")``
+    return {"status": "deleted"}

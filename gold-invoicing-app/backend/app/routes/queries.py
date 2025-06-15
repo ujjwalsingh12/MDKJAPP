@@ -1,12 +1,12 @@
+# routes/queries.py
+
 from flask import Blueprint, request, jsonify
 from app.services.queries import (
-    get_all_entries,
-    get_entries_by_customer,
-    get_summary_by_type,
-    get_all_bills,
-    get_bills_by_customer,
-    get_all_cash,
-    get_customer_details
+    get_table_data,
+    get_data_by_gstin,
+    insert_record,
+    update_record_by_id,
+    delete_record_by_id
 )
 
 queries_bp = Blueprint("queries_bp", __name__)
@@ -15,65 +15,55 @@ queries_bp = Blueprint("queries_bp", __name__)
 def health():
     return jsonify({"status": "ok"})
 
-
-@queries_bp.route("/entries/all", methods=["GET"])
-def all_entries():
+@queries_bp.route("/<table>/all", methods=["GET"])
+def get_all_records(table):
     try:
-        result = get_all_entries()
+        page = int(request.args.get("page", 1))
+        page_size = int(request.args.get("page_size", 20))
+        sort_by = request.args.get("sort_by")
+        sort_order = request.args.get("sort_order", "asc")
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
+
+        result = get_table_data(table, page, page_size, sort_by, sort_order, start_date, end_date)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@queries_bp.route("/entries/customer/<gstin>", methods=["GET"])
-def entries_by_customer(gstin):
+@queries_bp.route("/<table>/customer/<gstin>", methods=["GET"])
+def get_by_gstin(table, gstin):
     try:
-        result = get_entries_by_customer(gstin)
+        result = get_data_by_gstin(table, gstin)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@queries_bp.route("/summary/type", methods=["GET"])
-def summary_by_type():
+@queries_bp.route("/<table>/add", methods=["POST"])
+def add_record(table):
     try:
-        result = get_summary_by_type()
+        data = request.json
+        result = insert_record(table, data)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@queries_bp.route("/bills/all", methods=["GET"])
-def all_bills():
+@queries_bp.route("/<table>/update/<int:record_id>", methods=["PUT"])
+def update_record(table, record_id):
     try:
-        result = get_all_bills()
+        data = request.json
+        result = update_record_by_id(table, record_id, data)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@queries_bp.route("/bills/customer/<gstin>", methods=["GET"])
-def bills_by_customer(gstin):
+@queries_bp.route("/<table>/delete/<int:record_id>", methods=["DELETE"])
+def delete_record(table, record_id):
     try:
-        result = get_bills_by_customer(gstin)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@queries_bp.route("/cash/all", methods=["GET"])
-def all_cash():
-    try:
-        result = get_all_cash()
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@queries_bp.route("/customer/<gstin>", methods=["GET"])
-def customer_details(gstin):
-    try:
-        result = get_customer_details(gstin)
+        result = delete_record_by_id(table, record_id)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
