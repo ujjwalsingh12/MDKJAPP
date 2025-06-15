@@ -45,6 +45,48 @@ $$;
 ALTER FUNCTION public.delete_cash_entry(p_id integer, p_gstin text) OWNER TO postgres;
 
 --
+-- Name: diagnose_cash_table(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.diagnose_cash_table() RETURNS TABLE(check_type text, result text, details text)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Check if table exists
+    RETURN QUERY
+    SELECT 
+        'table_exists'::TEXT as check_type,
+        CASE WHEN EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_name = 'cash' AND table_schema = 'public'
+        ) THEN 'YES' ELSE 'NO' END as result,
+        'Checking if cash table exists in public schema'::TEXT as details;
+    
+    -- Check table structure
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'cash' AND table_schema = 'public') THEN
+        RETURN QUERY
+        SELECT 
+            'table_structure'::TEXT,
+            string_agg(column_name || ' (' || data_type || ')', ', '),
+            'Current cash table columns'::TEXT
+        FROM information_schema.columns
+        WHERE table_name = 'cash' AND table_schema = 'public';
+    END IF;
+    
+    -- Check current user
+    RETURN QUERY
+    SELECT 
+        'current_user'::TEXT,
+        current_user::TEXT,
+        'User executing the function'::TEXT;
+        
+END;
+$$;
+
+
+ALTER FUNCTION public.diagnose_cash_table() OWNER TO postgres;
+
+--
 -- Name: log_journal_entry(text, text, numeric, text, date, text, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -86,76 +128,286 @@ $$;
 ALTER FUNCTION public.log_journal_entry(p_gstin text, p_entry_type text, p_amount numeric, p_remark_id text, p_dated date, p_linked_row_id text, p_is_bank boolean) OWNER TO postgres;
 
 --
+-- Name: test_cash_insert(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.test_cash_insert() RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    test_id INT;
+    result_text TEXT;
+BEGIN
+    -- Try a simple insert
+    BEGIN
+        INSERT INTO cash (gstin, amount, dated, bank)
+        VALUES ('TEST_GSTIN', 100.00, CURRENT_DATE, false)
+        RETURNING id INTO test_id;
+        
+        result_text := 'SUCCESS: Inserted cash record with ID ' || test_id;
+        
+        -- Clean up test record
+        DELETE FROM cash WHERE id = test_id;
+        
+        RETURN result_text;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN 'ERROR: ' || SQLSTATE || ' - ' || SQLERRM;
+    END;
+END;
+$$;
+
+
+ALTER FUNCTION public.test_cash_insert() OWNER TO postgres;
+
+--
 -- Name: unified_insert_journal_entry(character varying, character varying, date, boolean, text, text, text, numeric, numeric, numeric, numeric, numeric, numeric, numeric); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.unified_insert_journal_entry(p_entry_type character varying, p_gstin character varying, p_dated date DEFAULT CURRENT_DATE, p_bank boolean DEFAULT false, p_remark_text text DEFAULT NULL::text, p_bill_no text DEFAULT NULL::text, p_purity text DEFAULT NULL::text, p_wt numeric DEFAULT NULL::numeric, p_rate numeric DEFAULT NULL::numeric, p_cgst numeric DEFAULT NULL::numeric, p_sgst numeric DEFAULT NULL::numeric, p_igst numeric DEFAULT NULL::numeric, p_weight numeric DEFAULT NULL::numeric, p_cash_amount numeric DEFAULT NULL::numeric) RETURNS TABLE(journal_ts timestamp without time zone, returned_entry_type character varying, returned_entry_id integer, returned_amount numeric, returned_remark_id integer)
     LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_entry_id INT;
-    v_amount NUMERIC;
-    v_remark INT;
-BEGIN
-    RAISE NOTICE 'Starting unified_insert_journal_entry with entry_type = %, gstin = %', p_entry_type, p_gstin;
-
-    -- Insert remark if provided
-    IF p_remark_text IS NOT NULL THEN
-        RAISE NOTICE 'Inserting into remarks: %', p_remark_text;
-        INSERT INTO remarks (gstin, remark)
-        VALUES (p_gstin, p_remark_text)
-        RETURNING remark_id INTO v_remark;
-        RAISE NOTICE 'Inserted remark_id = %', v_remark;
-    END IF;
-
-    CASE 
-        WHEN p_entry_type = 'bill' THEN
-            RAISE NOTICE 'Inserting bill with bill_no = %, wt = %, rate = %', p_bill_no, p_wt, p_rate;
-            INSERT INTO bill (bill_no, gstin, purity, wt, rate, dated, bank)
-            VALUES (p_bill_no, p_gstin, p_purity, p_wt, p_rate, p_dated, p_bank)
-            RETURNING id INTO v_entry_id;
-            v_amount := p_wt * p_rate;
-            RAISE NOTICE 'Inserted bill id = %, amount = %', v_entry_id, v_amount;
-
-        WHEN p_entry_type = 'cash' THEN
-            INSERT INTO cash (gstin, amount, dated, bank)
-            VALUES (p_gstin, p_cash_amount, p_dated, p_bank)
-            RETURNING id INTO v_entry_id;
-            v_amount := p_cash_amount;
-
-        WHEN p_entry_type = 'stock' OR p_entry_type = 'gold' THEN
-            INSERT INTO stock (gstin, purity, weight, dated, bank)
-            VALUES (p_gstin, p_purity, p_weight, p_dated, p_bank)
-            RETURNING id INTO v_entry_id;
-            v_amount := p_weight;
-
-        WHEN p_entry_type = 'remarks' THEN
-            v_entry_id := v_remark;
-            v_amount := NULL;
-
-        ELSE
-            RAISE EXCEPTION 'Unknown entry_type: %', p_entry_type;
-    END CASE;
-
-    RAISE NOTICE 'Inserting into journal: entry_id = %, amount = %', v_entry_id, v_amount;
-
-    RETURN QUERY
-    INSERT INTO journal (
-        timestamp, gstin, entry_type, entry_id,
-        amount, dated, bank, remark_id
-    )
-    VALUES (
-        NOW(), p_gstin, p_entry_type, v_entry_id,
-        v_amount, p_dated, p_bank, v_remark
-    )
-    RETURNING
-        timestamp,
-        entry_type,
-        entry_id,
-        amount,
-        remark_id;
-
-END;
+    AS $$
+DECLARE
+    v_entry_id INT;
+    v_amount NUMERIC;
+    v_remark INT := NULL;
+    v_function_start_time TIMESTAMP;
+    v_step_counter INT := 0;
+    v_error_context TEXT;
+BEGIN
+    -- Initialize function timing and debugging
+    v_function_start_time := clock_timestamp();
+    v_step_counter := v_step_counter + 1;
+    
+    RAISE NOTICE '[STEP %] Function started at % with entry_type=%, gstin=%', 
+        v_step_counter, v_function_start_time, p_entry_type, p_gstin;
+    
+    -- Input validation
+    v_step_counter := v_step_counter + 1;
+    RAISE NOTICE '[STEP %] Starting input validation', v_step_counter;
+    
+    -- Validate required parameters
+    IF p_entry_type IS NULL OR TRIM(p_entry_type) = '' THEN
+        RAISE EXCEPTION 'entry_type cannot be null or empty';
+    END IF;
+    
+    IF p_gstin IS NULL OR TRIM(p_gstin) = '' THEN
+        RAISE EXCEPTION 'gstin cannot be null or empty';
+    END IF;
+    
+    -- Normalize entry_type to lowercase for consistent comparison
+    p_entry_type := LOWER(TRIM(p_entry_type));
+    
+    RAISE NOTICE '[STEP %] Input validation passed. Normalized entry_type: %', 
+        v_step_counter, p_entry_type;
+    
+    -- Validate entry_type specific requirements
+    v_step_counter := v_step_counter + 1;
+    RAISE NOTICE '[STEP %] Validating entry_type specific requirements', v_step_counter;
+    
+    CASE p_entry_type
+        WHEN 'bill' THEN
+            IF p_bill_no IS NULL OR TRIM(p_bill_no) = '' THEN
+                RAISE EXCEPTION 'bill_no is required for bill entries';
+            END IF;
+            IF p_wt IS NULL OR p_wt <= 0 THEN
+                RAISE EXCEPTION 'weight (wt) must be positive for bill entries';
+            END IF;
+            IF p_rate IS NULL OR p_rate <= 0 THEN
+                RAISE EXCEPTION 'rate must be positive for bill entries';
+            END IF;
+            
+        WHEN 'cash' THEN
+            IF p_cash_amount IS NULL OR p_cash_amount = 0 THEN
+                RAISE EXCEPTION 'cash_amount is required and must be non-zero for cash entries';
+            END IF;
+            
+        WHEN 'stock', 'gold' THEN
+            IF p_weight IS NULL OR p_weight <= 0 THEN
+                RAISE EXCEPTION 'weight must be positive for % entries', p_entry_type;
+            END IF;
+            
+        WHEN 'remarks' THEN
+            IF p_remark_text IS NULL OR TRIM(p_remark_text) = '' THEN
+                RAISE EXCEPTION 'remark_text is required for remarks entries';
+            END IF;
+            
+        ELSE
+            RAISE EXCEPTION 'Unknown entry_type: %. Valid types are: bill, cash, stock, gold, remarks', p_entry_type;
+    END CASE;
+    
+    RAISE NOTICE '[STEP %] Entry type validation passed for: %', v_step_counter, p_entry_type;
+    
+    -- Handle remark insertion
+    IF p_remark_text IS NOT NULL AND TRIM(p_remark_text) != '' THEN
+        v_step_counter := v_step_counter + 1;
+        RAISE NOTICE '[STEP %] Inserting remark: %', v_step_counter, p_remark_text;
+        
+        BEGIN
+            INSERT INTO remarks (gstin, remark)
+            VALUES (p_gstin, TRIM(p_remark_text))
+            RETURNING remark_id INTO v_remark;
+            
+            RAISE NOTICE '[STEP %] Successfully inserted remark with ID: %', v_step_counter, v_remark;
+        EXCEPTION
+            WHEN OTHERS THEN
+                v_error_context := 'Error inserting remark';
+                RAISE EXCEPTION '% - SQLSTATE: %, Error: %', v_error_context, SQLSTATE, SQLERRM;
+        END;
+    ELSE
+        RAISE NOTICE '[STEP %] No remark to insert', v_step_counter;
+    END IF;
+    
+    -- Handle main entry insertion based on type
+    v_step_counter := v_step_counter + 1;
+    RAISE NOTICE '[STEP %] Starting main entry insertion for type: %', v_step_counter, p_entry_type;
+    
+    BEGIN
+        CASE p_entry_type
+            WHEN 'bill' THEN
+                RAISE NOTICE '[STEP %] Inserting bill: bill_no=%, purity=%, wt=%, rate=%, dated=%, bank=%', 
+                    v_step_counter, p_bill_no, p_purity, p_wt, p_rate, p_dated, p_bank;
+                
+                INSERT INTO bill (bill_no, gstin, purity, wt, rate, dated, bank)
+                VALUES (TRIM(p_bill_no), p_gstin, p_purity, p_wt, p_rate, p_dated, p_bank)
+                RETURNING id INTO v_entry_id;
+                
+                v_amount := p_wt * p_rate;
+                RAISE NOTICE '[STEP %] Bill inserted successfully: id=%, calculated_amount=%', 
+                    v_step_counter, v_entry_id, v_amount;
+                
+            WHEN 'cash' THEN
+                RAISE NOTICE '[STEP %] Inserting cash: amount=%, dated=%, bank=%', 
+                    v_step_counter, p_cash_amount, p_dated, p_bank;
+                
+                -- Additional debugging for cash table
+                RAISE NOTICE '[STEP %] Cash table debug - About to execute INSERT with values: gstin=%, amount=%, dated=%, bank=%',
+                    v_step_counter, p_gstin, p_cash_amount, p_dated, p_bank;
+                
+                -- Check if cash table exists and has expected structure
+                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'cash' AND table_schema = 'public') THEN
+                    RAISE EXCEPTION 'Cash table does not exist in public schema';
+                END IF;
+                
+                -- Verify all columns exist
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'cash' AND column_name = 'gstin' AND table_schema = 'public'
+                ) THEN
+                    RAISE EXCEPTION 'Column gstin does not exist in cash table';
+                END IF;
+                
+                -- Execute the insert with detailed logging
+                INSERT INTO cash (gstin, amount, dated, bank)
+                VALUES (p_gstin, p_cash_amount, p_dated, p_bank)
+                RETURNING id INTO v_entry_id;
+                
+                -- Verify the insertion was successful
+                IF v_entry_id IS NULL THEN
+                    RAISE EXCEPTION 'Cash insert failed - no ID returned';
+                END IF;
+                
+                -- Double-check the record exists
+                IF NOT EXISTS (SELECT 1 FROM cash WHERE id = v_entry_id) THEN
+                    RAISE EXCEPTION 'Cash record with id % was not found after insert', v_entry_id;
+                END IF;
+                
+                v_amount := p_cash_amount;
+                RAISE NOTICE '[STEP %] Cash inserted successfully: id=%, amount=%, verified in table=%', 
+                    v_step_counter, v_entry_id, v_amount, 
+                    (SELECT COUNT(*) FROM cash WHERE id = v_entry_id);
+                
+            WHEN 'stock', 'gold' THEN
+                RAISE NOTICE '[STEP %] Inserting %: purity=%, weight=%, dated=%, bank=%', 
+                    v_step_counter, p_entry_type, p_purity, p_weight, p_dated, p_bank;
+                
+                INSERT INTO stock (gstin, purity, weight, dated, bank)
+                VALUES (p_gstin, p_purity, p_weight, p_dated, p_bank)
+                RETURNING id INTO v_entry_id;
+                
+                v_amount := p_weight;
+                RAISE NOTICE '[STEP %] % inserted successfully: id=%, weight=%', 
+                    v_step_counter, p_entry_type, v_entry_id, v_amount;
+                
+            WHEN 'remarks' THEN
+                RAISE NOTICE '[STEP %] Processing remarks entry', v_step_counter;
+                v_entry_id := v_remark;
+                v_amount := NULL;
+                RAISE NOTICE '[STEP %] Remarks entry processed: entry_id=%, amount=%', 
+                    v_step_counter, v_entry_id, v_amount;
+        END CASE;
+        
+    EXCEPTION
+        WHEN unique_violation THEN
+            v_error_context := FORMAT('Unique constraint violation for %s entry', p_entry_type);
+            RAISE EXCEPTION '% - Duplicate entry detected. SQLSTATE: %, Error: %', 
+                v_error_context, SQLSTATE, SQLERRM;
+        WHEN foreign_key_violation THEN
+            v_error_context := FORMAT('Foreign key violation for %s entry', p_entry_type);
+            RAISE EXCEPTION '% - Referenced record does not exist. SQLSTATE: %, Error: %', 
+                v_error_context, SQLSTATE, SQLERRM;
+        WHEN check_violation THEN
+            v_error_context := FORMAT('Check constraint violation for %s entry', p_entry_type);
+            RAISE EXCEPTION '% - Data violates table constraints. SQLSTATE: %, Error: %', 
+                v_error_context, SQLSTATE, SQLERRM;
+        WHEN OTHERS THEN
+            v_error_context := FORMAT('Unexpected error inserting %s entry', p_entry_type);
+            RAISE EXCEPTION '% - SQLSTATE: %, Error: %', v_error_context, SQLSTATE, SQLERRM;
+    END;
+    
+    -- Validate that we have a valid entry_id
+    IF v_entry_id IS NULL THEN
+        RAISE EXCEPTION 'Failed to generate entry_id for % entry', p_entry_type;
+    END IF;
+    
+    -- Insert into journal table
+    v_step_counter := v_step_counter + 1;
+    RAISE NOTICE '[STEP %] Inserting into journal: entry_type=%, entry_id=%, amount=%, remark_id=%', 
+        v_step_counter, p_entry_type, v_entry_id, v_amount, v_remark;
+    
+    BEGIN
+        RETURN QUERY
+        INSERT INTO journal (
+            timestamp, gstin, entry_type, entry_id,
+            amount, dated, bank, remark_id
+        )
+        VALUES (
+            NOW(), p_gstin, p_entry_type, v_entry_id,
+            v_amount, p_dated, p_bank, v_remark
+        )
+        RETURNING
+            timestamp,
+            entry_type,
+            entry_id,
+            amount,
+            remark_id;
+        
+        v_step_counter := v_step_counter + 1;
+        RAISE NOTICE '[STEP %] Journal entry inserted successfully', v_step_counter;
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            v_error_context := 'Error inserting journal entry';
+            RAISE EXCEPTION '% - SQLSTATE: %, Error: %', v_error_context, SQLSTATE, SQLERRM;
+    END;
+    
+    -- Function completion
+    v_step_counter := v_step_counter + 1;
+    RAISE NOTICE '[STEP %] Function completed successfully in % ms', 
+        v_step_counter, 
+        EXTRACT(MILLISECONDS FROM (clock_timestamp() - v_function_start_time));
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Log the error with full context
+        RAISE NOTICE '[ERROR] Function failed at step % after % ms. Context: %', 
+            v_step_counter,
+            EXTRACT(MILLISECONDS FROM (clock_timestamp() - v_function_start_time)),
+            COALESCE(v_error_context, 'Unknown error location');
+        
+        -- Re-raise the exception with additional context
+        RAISE EXCEPTION 'unified_insert_journal_entry failed: %', SQLERRM;
+END;
 $$;
 
 
@@ -331,7 +583,7 @@ ALTER SEQUENCE public.gold_id_seq OWNED BY public.gold.id;
 --
 
 CREATE TABLE public.journal (
-    "timestamp" timestamp without time zone NOT NULL,
+    "timestamp" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     gstin character varying(15) NOT NULL,
     entry_type character varying(20) NOT NULL,
     amount numeric(12,2),

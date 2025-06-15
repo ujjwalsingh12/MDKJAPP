@@ -6,7 +6,8 @@ from app.services.queries import (
     get_data_by_gstin,
     insert_record,
     update_record_by_id,
-    delete_record_by_id
+    delete_record_by_id,
+    unified_insert_journal_entry
 )
 
 queries_bp = Blueprint("queries_bp", __name__)
@@ -64,6 +65,17 @@ def update_record(table, record_id):
 def delete_record(table, record_id):
     try:
         result = delete_record_by_id(table, record_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    
+@queries_bp.route("/journal/entry", methods=["POST"])
+def add_journal_entry():
+    try:
+        data = request.json
+        use_entry_table = data.get("journal", False)  # default to "journal"
+        result = unified_insert_journal_entry(data, use_entry_table)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
