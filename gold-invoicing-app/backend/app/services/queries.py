@@ -1,15 +1,22 @@
-from sqlalchemy import text
+from db import get_db_connection
+import pandas as pd
 
-from flask_sqlalchemy import SQLAlchemy
+def get_all_entries():
+    conn = get_db_connection()
+    df = pd.read_sql("SELECT * FROM journal", conn)
+    conn.close()
+    return df.to_dict(orient="records")
 
-db = SQLAlchemy()
+def get_entries_by_customer(gstin):
+    conn = get_db_connection()
+    df = pd.read_sql(
+        "SELECT * FROM journal WHERE gstin = %s", conn, params=(gstin,)
+    )
+    conn.close()
+    return df.to_dict(orient="records")
 
-def fetch_all_entries():
-    sql = text("""
-        SELECT * FROM journal_entry
-        ORDER BY id DESC
-        LIMIT 100
-    """)
-    result = db.session.execute(sql)
-    rows = [dict(row) for row in result.fetchall()]
-    return rows
+def get_summary_by_type():
+    conn = get_db_connection()
+    df = pd.read_sql("SELECT entry_type, COUNT(*) AS count FROM journal GROUP BY entry_type", conn)
+    conn.close()
+    return df.to_dict(orient="records")

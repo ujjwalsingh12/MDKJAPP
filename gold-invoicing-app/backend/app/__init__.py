@@ -16,15 +16,15 @@
 #     return app
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from config import Config
-
-db = SQLAlchemy()
+from db import db, init_db  # updated import
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    db.init_app(app)
+
+    # Initialize both SQLAlchemy and raw connection engine
+    init_db(app)
 
     # Import and register each route blueprint
     from app.routes.entries import entries_bp
