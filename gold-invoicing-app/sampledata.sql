@@ -1,13 +1,14 @@
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN001', 'Amit Jewels', '9876543210');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN002', 'Sharma Traders', '9123456780');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN003', 'Lakshmi Metals', '9988776655');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN004', 'Kohinoor Gold', '8877665544');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN005', 'Ridhi Sidhi', '9001122334');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN006', 'Sona Chandi', '9887766554');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN007', 'Ganesh & Sons', '9663344552');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN008', 'Raj Goldsmiths', '9111222333');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN009', 'Mahalaxmi Stores', '9334455667');
-INSERT INTO customer_details (gstin, name, contact) VALUES ('GSTIN010', 'Zaveri Bazaar', '9556677880');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN001', 'Amit Jewels', '9876543210', 'amitjewels@example.com', '123 Market Street, Delhi');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN002', 'Sharma Traders', '9123456780', 'sharmatraders@example.com', '456 Industrial Area, Mumbai');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN003', 'Lakshmi Metals', '9988776655', 'lakshmimetals@example.com', '789 Gold Lane, Chennai');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN004', 'Kohinoor Gold', '8877665544', 'kohinoorgold@example.com', '101 Silver Road, Kolkata');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN005', 'Ridhi Sidhi', '9001122334', 'ridhisidhi@example.com', '202 Platinum Avenue, Jaipur');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN006', 'Sona Chandi', '9887766554', 'sonachandi@example.com', '303 Diamond Street, Ahmedabad');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN007', 'Ganesh & Sons', '9663344552', 'ganeshandsons@example.com', '404 Ruby Plaza, Hyderabad');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN008', 'Raj Goldsmiths', '9111222333', 'rajgoldsmiths@example.com', '505 Emerald Tower, Pune');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN009', 'Mahalaxmi Stores', '9334455667', 'mahalaxmistores@example.com', '606 Sapphire Complex, Bangalore');
+INSERT INTO customer_details (gstin, name, phone, email, address) VALUES ('GSTIN010', 'Zaveri Bazaar', '9556677880', 'zaveribazaar@example.com', '707 Opal Mall, Surat');
+
 
 SELECT * FROM unified_insert_journal_entry('bill', 'GSTIN003', '2025-06-12', false, NULL, 'BILL-011', '22', 4.5, 6150);
 SELECT * FROM unified_insert_journal_entry('bill', 'GSTIN004', '2025-06-13', false, NULL, 'BILL-012', '22', 6.0, 6200);
