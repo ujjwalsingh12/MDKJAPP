@@ -17,7 +17,7 @@ import Receipt from './components/Receipt';
 import UnifiedEntryForm from './components/UnifiedEntryForm';
 // import ExcelInterface from './components/ExcelInterface';
 // import CreateBill from './components/CreateBill';
-// import ReceiptPage from './components/ReceiptPage';
+import ReceiptPage from './components/ReceiptPage';
 
 const AppRoutes = () => (
     <Router>
@@ -37,7 +37,7 @@ const AppRoutes = () => (
             <Route path="/receipt" element={<Receipt />} />
             {/* <Route path="/excel" element={<ExcelInterface />} /> */}
             {/* <Route path="/create-bill" element={<CreateBill />} /> */}
-            {/* <Route path="/receipt-page" element={<ReceiptPage />} /> */}
+            <Route path="/receipt-page" element={<ReceiptPage />} />
         </Routes>
     </Router>
 );

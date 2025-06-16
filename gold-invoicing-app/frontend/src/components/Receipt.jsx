@@ -1,7 +1,28 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { fetchAll } from '../api';
 
 const Receipt = () => {
   // --- Dummy customer data for auto-fill ---
+
+  const [customers, setCustomers] = useState([]);
+  useEffect(() => {
+    const loadCustomers = async () => {
+      try {
+        const response = await fetchAll('customer_details', {
+          page: 1,
+          page_size: 100
+        });
+        setCustomers(response.data); // Assuming backend returns `{ records: [...] }`
+      } catch (err) {
+        console.error('Error loading customers:', err);
+      } finally {
+        ;
+      }
+    };
+
+    loadCustomers();
+  }, []);
+  console.log('Customers:', customers);
   const dummyCustomers = [
     {
       id: 1,
@@ -100,8 +121,8 @@ const Receipt = () => {
 
   // --- Filter customers based on search term ---
   const filteredCustomers = useMemo(() => {
-    if (!customerSearchTerm) return dummyCustomers;
-    return dummyCustomers.filter(customer =>
+    if (!customerSearchTerm) return customers;
+    return customers.filter(customer =>
       customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
       customer.phone.includes(customerSearchTerm)
     );

@@ -10,7 +10,7 @@ export default function NavBar() {
             <Link to="/UnifiedEntryForm">Unified Entry Form</Link>
             {/* <Link to="/excel">Excel Interface</Link> */}
             {/* <Link to="/create-bill">Create Bill</Link> */}
-            {/* <Link to="/receipt-page">Receipt Page</Link> */}
+            <Link to="/receipt-page">Receipt Page</Link>
         </nav>
     );
 }

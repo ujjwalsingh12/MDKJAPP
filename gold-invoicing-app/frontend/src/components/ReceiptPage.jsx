@@ -6,7 +6,7 @@ import TaxSummary from './TaxSummary';
 import PrintPreview from './PrintPreview';
 // import { calculateTotals } from './utils';
 import { containerStyle } from './styles';
-import { useReactToPrint } from 'react-to-print';
+// import { useReactToPrint } from 'react-to-print';
 import BillPreview from './BillPreview';
 
 
@@ -283,11 +283,11 @@ const ReceiptPage = () => {
     // --- Print Handler ---
 
     const componentRef = useRef(null);
-    const handlePrint = useReactToPrint({
-        contentRef: componentRef,
-        documentTitle: 'MDKJ_Receipt',
-        copyStyles: true,
-    });
+    // const handlePrint = useReactToPrint({
+    //     contentRef: componentRef,
+    //     documentTitle: 'MDKJ_Receipt',
+    //     copyStyles: true,
+    // });
 
     const containerStyle = {
         maxWidth: '1400px',
@@ -479,7 +479,7 @@ const ReceiptPage = () => {
         </div>
 
         {/* --- Action Buttons Section --- */}
-        <div style={controlsStyle}>
+        {/* <div style={controlsStyle}>
             <button
                 onClick={handlePrint}
                 style={{
@@ -498,7 +498,7 @@ const ReceiptPage = () => {
         </div>
 
         {/* --- Hidden Print Preview --- */}
-        <div style={{ display: 'none' }}>
+        {/* <div style={{ display: 'none' }}>
             <PrintPreview
                 ref={componentRef}
                 billHeader={billHeader}
@@ -506,7 +506,7 @@ const ReceiptPage = () => {
                 calculations={calculations}
                 storeInfo={storeInfo}
             />
-        </div>
+        </div>  */}
     </div>);
 };
 
