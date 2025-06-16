@@ -1,8 +1,29 @@
+
+
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { fetchAll } from '../api';
 
 const Receipt = () => {
-  // --- Dummy customer data for auto-fill ---
+  // --- Fixed store information ---
+  const [cgstRate, setCgstRate] = useState(1.5);
+  const [sgstRate, setSgstRate] = useState(1.5);
+  const [igstRate, setIgstRate] = useState(0);
+  const [hallmarkingCharges, setHallmarkingCharges] = useState(45.00);
+  const [hallmarkingPieces, setHallmarkingPieces] = useState(40);
+  const [hallmarkingCgst, setHallmarkingCgst] = useState(9.0);
+  const [hallmarkingSgst, setHallmarkingSgst] = useState(9.0);
+  const [discount, setDiscount] = useState(0);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const storeInfo = {
+    storeName: 'MDKJ JEWELLERS',
+    storeAddress: 'Shop No. 45, Birhana Road\nKanpur, Uttar Pradesh 208001',
+    phone: '+91 98765 12345',
+    email: 'mdkjjewellers@gmail.com'
+  };
+
+
 
   const [customers, setCustomers] = useState([]);
   useEffect(() => {
@@ -22,52 +43,15 @@ const Receipt = () => {
 
     loadCustomers();
   }, []);
-  console.log('Customers:', customers);
-  const dummyCustomers = [
-    {
-      id: 1,
-      name: 'Rajesh Kumar',
-      phone: '+91 98765 43210',
-      address: '123 MG Road\nKanpur, UP 208001',
-      email: 'rajesh.kumar@email.com'
-    },
-    {
-      id: 2,
-      name: 'Priya Sharma',
-      phone: '+91 87654 32109',
-      address: '456 Civil Lines\nKanpur, UP 208002',
-      email: 'priya.sharma@email.com'
-    },
-    {
-      id: 3,
-      name: 'Amit Gupta',
-      phone: '+91 76543 21098',
-      address: '789 Swaroop Nagar\nKanpur, UP 208003',
-      email: 'amit.gupta@email.com'
-    },
-    {
-      id: 4,
-      name: 'Sunita Verma',
-      phone: '+91 65432 10987',
-      address: '321 Kalyanpur\nKanpur, UP 208004',
-      email: 'sunita.verma@email.com'
-    },
-    {
-      id: 5,
-      name: 'Vikram Singh',
-      phone: '+91 54321 09876',
-      address: '654 Govind Nagar\nKanpur, UP 208005',
-      email: 'vikram.singh@email.com'
-    }
-  ];
+  // --- Filter customers based on search term ---
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearchTerm) return customers;
+    return customers.filter(customer =>
+      customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+      customer.phone.includes(customerSearchTerm)
+    );
+  }, [customerSearchTerm]);
 
-  // --- Fixed store information ---
-  const storeInfo = {
-    storeName: 'MDKJ JEWELLERS',
-    storeAddress: 'Shop No. 45, Birhana Road\nKanpur, Uttar Pradesh 208001',
-    phone: '+91 98765 12345',
-    email: 'mdkjjewellers@gmail.com'
-  };
 
   // --- State for bill header information ---
   const [billHeader, setBillHeader] = useState({
@@ -79,6 +63,8 @@ const Receipt = () => {
     customerEmail: ''
   });
 
+
+
   // --- State for bill items ---
   const [items, setItems] = useState([
     {
@@ -86,84 +72,28 @@ const Receipt = () => {
       description: 'New Gold Ornaments',
       hsnSac: '7113',
       purity: '18 CT',
-      weight: 104.510,
+      weight: 0,
       rate: 7200.00,
-      amount: 752472.00,
-      isEditing: false
+      amount: 0,
+      isEditing: true
     },
-    {
-      id: 2,
-      description: 'New Gold Ornaments',
-      hsnSac: '7113',
-      purity: '18 CT',
-      weight: 260.770,
-      rate: 7200.00,
-      amount: 1877544.00,
-      isEditing: false
-    },
+    // {
+    //   id: 2,
+    //   description: 'New Gold Ornaments',
+    //   hsnSac: '7113',
+    //   purity: '18 CT',
+    //   weight: 260.770,
+    //   rate: 7200.00,
+    //   amount: 1877544.00,
+    //   isEditing: false
+    // },
   ]);
 
   // --- State for charges and taxes ---
-  const [cgstRate, setCgstRate] = useState(1.5);
-  const [sgstRate, setSgstRate] = useState(1.5);
-  const [igstRate, setIgstRate] = useState(0);
-  const [hallmarkingCharges, setHallmarkingCharges] = useState(45.00);
-  const [hallmarkingPieces, setHallmarkingPieces] = useState(40);
-  const [hallmarkingCgst, setHallmarkingCgst] = useState(9.0);
-  const [hallmarkingSgst, setHallmarkingSgst] = useState(9.0);
-  const [discount, setDiscount] = useState(0);
-  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
-  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
   // --- Ref for the bill preview ---
   const billRef = useRef();
 
-  // --- Filter customers based on search term ---
-  const filteredCustomers = useMemo(() => {
-    if (!customerSearchTerm) return customers;
-    return customers.filter(customer =>
-      customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-      customer.phone.includes(customerSearchTerm)
-    );
-  }, [customerSearchTerm]);
-
-  // --- Convert number to words ---
-  const convertToWords = (num) => {
-    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-    const convertHundreds = (n) => {
-      let result = '';
-      if (n > 99) {
-        result += ones[Math.floor(n / 100)] + ' Hundred ';
-        n %= 100;
-      }
-      if (n > 19) {
-        result += tens[Math.floor(n / 10)] + ' ';
-        n %= 10;
-      }
-      if (n > 0) {
-        result += ones[n] + ' ';
-      }
-      return result;
-    };
-
-    if (num === 0) return 'Zero';
-
-    const crore = Math.floor(num / 10000000);
-    const lakh = Math.floor((num % 10000000) / 100000);
-    const thousand = Math.floor((num % 100000) / 1000);
-    const remainder = num % 1000;
-
-    let result = '';
-    if (crore > 0) result += convertHundreds(crore) + 'Crore ';
-    if (lakh > 0) result += convertHundreds(lakh) + 'Lakh(s) ';
-    if (thousand > 0) result += convertHundreds(thousand) + 'Thousand ';
-    if (remainder > 0) result += convertHundreds(remainder);
-
-    return 'Rupees ' + result.trim() + ' Only';
-  };
 
   // --- Memoized calculations for totals ---
   const calculations = useMemo(() => {
@@ -202,7 +132,8 @@ const Receipt = () => {
       customerName: customer.name,
       customerPhone: customer.phone,
       customerAddress: customer.address,
-      customerEmail: customer.email
+      customerEmail: customer.email,
+      customerGstin: customer.gstin || '' // Assuming customer object has gstin field
     }));
     setCustomerSearchTerm(customer.name);
     setShowCustomerDropdown(false);
@@ -495,6 +426,16 @@ const Receipt = () => {
               onChange={(e) => handleHeaderChange('customerPhone', e.target.value)}
             />
           </div>
+          {/* Customer GSTIN */}
+          <div>
+            <label style={labelStyle}>Customer GSTIN:</label>
+            <input
+              type="text"
+              style={inputStyle}
+              value={billHeader.customerGstin || ''}
+              onChange={(e) => handleHeaderChange('customerGstin', e.target.value)}
+            />
+          </div>
 
           {/* Customer Address */}
           <div>
@@ -556,6 +497,11 @@ const Receipt = () => {
             {billHeader.customerPhone && (
               <p style={{ margin: '5px 0', fontSize: '14px' }}>
                 Phone: {billHeader.customerPhone}
+              </p>
+            )}
+            {billHeader.customerGstin && (
+              <p style={{ margin: '5px 0', fontSize: '14px' }}>
+                GSTIN: {billHeader.customerGstin}
               </p>
             )}
             {billHeader.customerAddress && (
@@ -749,7 +695,7 @@ const Receipt = () => {
           </tbody>
         </table>
 
-        {/* Totals Section */}
+        /* Totals Section */}
         <div style={{ width: '400px', marginLeft: 'auto', marginTop: '30px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <tbody>
@@ -788,7 +734,17 @@ const Receipt = () => {
               <tr>
                 <td style={{ padding: '8px', border: '1px solid #333' }}>
                   Hallmarking Charges 9983 @ ₹{hallmarkingCharges.toFixed(2)}<br />
-                  <small>{hallmarkingPieces} Pieces</small>
+                  <small>
+                    Pieces:
+                    <input
+                      type="number"
+                      style={{ ...inputStyle, width: '60px', marginLeft: '10px' }}
+                      value={hallmarkingPieces}
+                      onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
+                      min="0"
+                      step="1"
+                    />
+                  </small>
                 </td>
                 <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
                   ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -948,8 +904,90 @@ const Receipt = () => {
           <li>Print the final bill when ready</li>
         </ul>
       </div>
-    </div>
+    </div >
   );
 };
 
 export default Receipt;
+
+
+// ------------- END OF FILE -------------
+
+
+// --- Convert number to words ---
+const convertToWords = (num) => {
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  const convertHundreds = (n) => {
+    let result = '';
+    if (n > 99) {
+      result += ones[Math.floor(n / 100)] + ' Hundred ';
+      n %= 100;
+    }
+    if (n > 19) {
+      result += tens[Math.floor(n / 10)] + ' ';
+      n %= 10;
+    }
+    if (n > 0) {
+      result += ones[n] + ' ';
+    }
+    return result;
+  };
+
+  if (num === 0) return 'Zero';
+
+  const crore = Math.floor(num / 10000000);
+  const lakh = Math.floor((num % 10000000) / 100000);
+  const thousand = Math.floor((num % 100000) / 1000);
+  const remainder = num % 1000;
+
+  let result = '';
+  if (crore > 0) result += convertHundreds(crore) + 'Crore ';
+  if (lakh > 0) result += convertHundreds(lakh) + 'Lakh(s) ';
+  if (thousand > 0) result += convertHundreds(thousand) + 'Thousand ';
+  if (remainder > 0) result += convertHundreds(remainder);
+
+  return 'Rupees ' + result.trim() + ' Only';
+};
+// const dummyCustomers = [
+//   {
+//     id: 1,
+//     name: 'Rajesh Kumar',
+//     phone: '+91 98765 43210',
+//     address: '123 MG Road\nKanpur, UP 208001',
+//     email: 'rajesh.kumar@email.com'
+//   },
+//   {
+//     id: 2,
+//     name: 'Priya Sharma',
+//     phone: '+91 87654 32109',
+//     address: '456 Civil Lines\nKanpur, UP 208002',
+//     email: 'priya.sharma@email.com'
+//   },
+//   {
+//     id: 3,
+//     name: 'Amit Gupta',
+//     phone: '+91 76543 21098',
+//     address: '789 Swaroop Nagar\nKanpur, UP 208003',
+//     email: 'amit.gupta@email.com'
+//   },
+//   {
+//     id: 4,
+//     name: 'Sunita Verma',
+//     phone: '+91 65432 10987',
+//     address: '321 Kalyanpur\nKanpur, UP 208004',
+//     email: 'sunita.verma@email.com'
+//   },
+//   {
+//     id: 5,
+//     name: 'Vikram Singh',
+//     phone: '+91 54321 09876',
+//     address: '654 Govind Nagar\nKanpur, UP 208005',
+//     email: 'vikram.singh@email.com'
+//   }
+// ];
+
+
+
+// ------------- SCROLL UP TO SEE THE END OF FILE -------------
