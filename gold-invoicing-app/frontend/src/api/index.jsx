@@ -16,7 +16,9 @@ export const fetchByGSTIN = (table, gstin) =>
     axios.get(`${API_BASE}/${table}/customer/${gstin}`);
 
 
-
+// Add a new record to a specified table
+export const addRecord = (table, data) =>
+    axios.post(`${API_BASE}/${table}/add`, data);
 
 
 

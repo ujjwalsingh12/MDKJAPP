@@ -1,7 +1,8 @@
 
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { fetchAll } from '../api';
+import { fetchAll, addRecord, insertUnifiedEntry } from '../api';
+import { json } from 'react-router-dom';
 
 const Receipt = () => {
   // --- Fixed store information ---
@@ -520,369 +521,437 @@ const Receipt = () => {
             <p style={{ margin: '5px 0' }}><strong>Date:</strong> {billHeader.date}</p>
           </div>
         </div>
-
-        {/* Items Table */}
-        <table style={tableStyle}>
-          <thead>
-            <tr style={{ backgroundColor: '#f5f5f5' }}>
-              <th style={{ ...thStyle, width: '30px', textAlign: 'center' }}>S.No</th>
-              <th style={{ ...thStyle, width: '200px' }}>Description</th>
-              <th style={{ ...thStyle, width: '80px', textAlign: 'center' }}>HSN/SAC</th>
-              <th style={{ ...thStyle, width: '80px', textAlign: 'center' }}>Purity</th>
-              <th style={{ ...thStyle, width: '100px', textAlign: 'center' }}>Weight(in gms)</th>
-              <th style={{ ...thStyle, width: '100px', textAlign: 'right' }}>Rate (₹)</th>
-              <th style={{ ...thStyle, width: '120px', textAlign: 'right' }}>Amount (₹)</th>
-              <th style={{ ...thStyle, width: '150px', textAlign: 'center' }} className="print-hide">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, rowIndex) => (
-              <tr
-                key={item.id}
-                style={{
-                  backgroundColor: selectedRowIndex === rowIndex ? '#e3f2fd' : 'transparent',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={() => setSelectedRowIndex(rowIndex)}
-                onMouseLeave={() => setSelectedRowIndex(null)}
-              >
-                <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold' }}>
-                  {rowIndex + 1}
-                </td>
-                <td style={tdStyle}>
-                  {item.isEditing ? (
-                    <input
-                      type="text"
-                      style={{ ...inputStyle, margin: 0 }}
-                      value={item.description}
-                      data-row={rowIndex}
-                      data-field="description"
-                      onChange={(e) => handleItemChange(rowIndex, 'description', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'description')}
-                      autoFocus
-                    />
-                  ) : (
-                    <span
-                      onClick={() => handleEditClick(rowIndex)}
-                      style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
-                    >
-                      {item.description || 'Click to edit'}
-                    </span>
-                  )}
-                </td>
-                <td style={{ ...tdStyle, textAlign: 'center' }}>
-                  {item.isEditing ? (
-                    <input
-                      type="text"
-                      style={{ ...inputStyle, margin: 0, textAlign: 'center', width: '70px' }}
-                      value={item.hsnSac}
-                      data-row={rowIndex}
-                      data-field="hsnSac"
-                      onChange={(e) => handleItemChange(rowIndex, 'hsnSac', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'hsnSac')}
-                    />
-                  ) : (
-                    <span
-                      onClick={() => handleEditClick(rowIndex)}
-                      style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
-                    >
-                      {item.hsnSac}
-                    </span>
-                  )}
-                </td>
-                <td style={{ ...tdStyle, textAlign: 'center' }}>
-                  {item.isEditing ? (
-                    <input
-                      type="text"
-                      style={{ ...inputStyle, margin: 0, textAlign: 'center', width: '70px' }}
-                      value={item.purity}
-                      data-row={rowIndex}
-                      data-field="purity"
-                      onChange={(e) => handleItemChange(rowIndex, 'purity', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'purity')}
-                    />
-                  ) : (
-                    <span
-                      onClick={() => handleEditClick(rowIndex)}
-                      style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
-                    >
-                      {item.purity}
-                    </span>
-                  )}
-                </td>
-                <td style={{ ...tdStyle, textAlign: 'center' }}>
-                  {item.isEditing ? (
-                    <input
-                      type="number"
-                      style={{ ...inputStyle, margin: 0, textAlign: 'center', width: '90px' }}
-                      value={item.weight}
-                      data-row={rowIndex}
-                      data-field="weight"
-                      onChange={(e) => handleItemChange(rowIndex, 'weight', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'weight')}
-                      min="0"
-                      step="0.001"
-                    />
-                  ) : (
-                    <span
-                      onClick={() => handleEditClick(rowIndex)}
-                      style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
-                    >
-                      {item.weight.toFixed(3)}
-                    </span>
-                  )}
-                </td>
-                <td style={{ ...tdStyle, textAlign: 'right' }}>
-                  {item.isEditing ? (
-                    <input
-                      type="number"
-                      style={{ ...inputStyle, margin: 0, textAlign: 'right', width: '90px' }}
-                      value={item.rate}
-                      data-row={rowIndex}
-                      data-field="rate"
-                      onChange={(e) => handleItemChange(rowIndex, 'rate', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'rate')}
-                      min="0"
-                      step="0.01"
-                    />
-                  ) : (
-                    <span
-                      onClick={() => handleEditClick(rowIndex)}
-                      style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
-                    >
-                      ₹{item.rate.toFixed(2)}
-                    </span>
-                  )}
-                </td>
-                <td style={{ ...tdStyle, textAlign: 'right' }}>
-                  {item.isEditing ? (
-                    <input
-                      type="number"
-                      style={{ ...inputStyle, margin: 0, textAlign: 'right', width: '110px' }}
-                      value={item.amount}
-                      data-row={rowIndex}
-                      data-field="amount"
-                      onChange={(e) => handleItemChange(rowIndex, 'amount', e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'amount')}
-                      min="0"
-                      step="0.01"
-                    />
-                  ) : (
-                    <span
-                      onClick={() => handleEditClick(rowIndex)}
-                      style={{ cursor: 'pointer', display: 'block', padding: '4px', fontWeight: 'bold' }}
-                    >
-                      ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                  )}
-                </td>
-                <td style={{ ...tdStyle, textAlign: 'center' }} className="print-hide">
-                  <button
-                    style={item.isEditing ? saveButtonStyle : editButtonStyle}
-                    onClick={() => handleEditClick(rowIndex)}
-                  >
-                    {item.isEditing ? 'Save' : 'Edit'}
-                  </button>
-                  <button
-                    style={deleteButtonStyle}
-                    onClick={() => handleDeleteRow(rowIndex)}
-                  >
-                    Del
-                  </button>
-                </td>
+        <div>
+          {/* Items Table */}
+          <table style={tableStyle}>
+            <thead>
+              <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <th style={{ ...thStyle, width: '30px', textAlign: 'center' }}>S.No</th>
+                <th style={{ ...thStyle, width: '200px' }}>Description</th>
+                <th style={{ ...thStyle, width: '80px', textAlign: 'center' }}>HSN/SAC</th>
+                <th style={{ ...thStyle, width: '80px', textAlign: 'center' }}>Purity</th>
+                <th style={{ ...thStyle, width: '100px', textAlign: 'center' }}>Weight(in gms)</th>
+                <th style={{ ...thStyle, width: '100px', textAlign: 'right' }}>Rate (₹)</th>
+                <th style={{ ...thStyle, width: '120px', textAlign: 'right' }}>Amount (₹)</th>
+                <th style={{ ...thStyle, width: '150px', textAlign: 'center' }} className="print-hide">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-
-        /* Totals Section */}
-        <div style={{ width: '400px', marginLeft: 'auto', marginTop: '30px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            </thead>
             <tbody>
-              <tr>
-                <td style={{ padding: '8px', fontWeight: 'bold', backgroundColor: '#f5f5f5', border: '1px solid #333' }}>
-                  Total Taxable
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', backgroundColor: '#f5f5f5', border: '1px solid #333' }}>
-                  ₹{parseFloat(calculations.totalTaxable).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333' }}>
-                  CGST {cgstRate}%
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  ₹{parseFloat(calculations.cgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333' }}>
-                  SGST {sgstRate}%
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  ₹{parseFloat(calculations.sgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333' }}>
-                  IGST {igstRate}%
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  ₹{parseFloat(calculations.igstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333' }}>
-                  Hallmarking Charges 9983 @ ₹{hallmarkingCharges.toFixed(2)}<br />
-                  <small>
-                    Pieces:
-                    <input
-                      type="number"
-                      style={{ ...inputStyle, width: '60px', marginLeft: '10px' }}
-                      value={hallmarkingPieces}
-                      onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
-                      min="0"
-                      step="1"
-                    />
-                  </small>
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
-                  CGST {hallmarkingCgst}%
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  ₹{parseFloat(calculations.hallmarkingCgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
-                  SGST {hallmarkingSgst}%
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  ₹{parseFloat(calculations.hallmarkingSgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
-                  IGST 0.0%
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  ₹0.00
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px', border: '1px solid #333' }}>
-                  Round off
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                  {parseFloat(calculations.roundOff) >= 0 ? '+' : ''}₹{calculations.roundOff}
-                </td>
-              </tr>
-              <tr>
-                <td style={{ padding: '12px', fontWeight: 'bold', fontSize: '18px', backgroundColor: '#f0f0f0', border: '2px solid #333' }}>
-                  Grand Total
-                </td>
-                <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold', fontSize: '18px', backgroundColor: '#f0f0f0', border: '2px solid #333' }}>
-                  ₹{parseFloat(calculations.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
+              {items.map((item, rowIndex) => (
+                <tr
+                  key={item.id}
+                  style={{
+                    backgroundColor: selectedRowIndex === rowIndex ? '#e3f2fd' : 'transparent',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={() => setSelectedRowIndex(rowIndex)}
+                  onMouseLeave={() => setSelectedRowIndex(null)}
+                >
+                  <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold' }}>
+                    {rowIndex + 1}
+                  </td>
+                  <td style={tdStyle}>
+                    {item.isEditing ? (
+                      <input
+                        type="text"
+                        style={{ ...inputStyle, margin: 0 }}
+                        value={item.description}
+                        data-row={rowIndex}
+                        data-field="description"
+                        onChange={(e) => handleItemChange(rowIndex, 'description', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'description')}
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        onClick={() => handleEditClick(rowIndex)}
+                        style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
+                      >
+                        {item.description || 'Click to edit'}
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {item.isEditing ? (
+                      <input
+                        type="text"
+                        style={{ ...inputStyle, margin: 0, textAlign: 'center', width: '70px' }}
+                        value={item.hsnSac}
+                        data-row={rowIndex}
+                        data-field="hsnSac"
+                        onChange={(e) => handleItemChange(rowIndex, 'hsnSac', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'hsnSac')}
+                      />
+                    ) : (
+                      <span
+                        onClick={() => handleEditClick(rowIndex)}
+                        style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
+                      >
+                        {item.hsnSac}
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {item.isEditing ? (
+                      <input
+                        type="text"
+                        style={{ ...inputStyle, margin: 0, textAlign: 'center', width: '70px' }}
+                        value={item.purity}
+                        data-row={rowIndex}
+                        data-field="purity"
+                        onChange={(e) => handleItemChange(rowIndex, 'purity', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'purity')}
+                      />
+                    ) : (
+                      <span
+                        onClick={() => handleEditClick(rowIndex)}
+                        style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
+                      >
+                        {item.purity}
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {item.isEditing ? (
+                      <input
+                        type="number"
+                        style={{ ...inputStyle, margin: 0, textAlign: 'center', width: '90px' }}
+                        value={item.weight}
+                        data-row={rowIndex}
+                        data-field="weight"
+                        onChange={(e) => handleItemChange(rowIndex, 'weight', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'weight')}
+                        min="0"
+                        step="0.001"
+                      />
+                    ) : (
+                      <span
+                        onClick={() => handleEditClick(rowIndex)}
+                        style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
+                      >
+                        {item.weight.toFixed(3)}
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    {item.isEditing ? (
+                      <input
+                        type="number"
+                        style={{ ...inputStyle, margin: 0, textAlign: 'right', width: '90px' }}
+                        value={item.rate}
+                        data-row={rowIndex}
+                        data-field="rate"
+                        onChange={(e) => handleItemChange(rowIndex, 'rate', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'rate')}
+                        min="0"
+                        step="0.01"
+                      />
+                    ) : (
+                      <span
+                        onClick={() => handleEditClick(rowIndex)}
+                        style={{ cursor: 'pointer', display: 'block', padding: '4px' }}
+                      >
+                        ₹{item.rate.toFixed(2)}
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    {item.isEditing ? (
+                      <input
+                        type="number"
+                        style={{ ...inputStyle, margin: 0, textAlign: 'right', width: '110px' }}
+                        value={item.amount}
+                        data-row={rowIndex}
+                        data-field="amount"
+                        onChange={(e) => handleItemChange(rowIndex, 'amount', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'amount')}
+                        min="0"
+                        step="0.01"
+                      />
+                    ) : (
+                      <span
+                        onClick={() => handleEditClick(rowIndex)}
+                        style={{ cursor: 'pointer', display: 'block', padding: '4px', fontWeight: 'bold' }}
+                      >
+                        ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }} className="print-hide">
+                    <button
+                      style={item.isEditing ? saveButtonStyle : editButtonStyle}
+                      onClick={() => handleEditClick(rowIndex)}
+                    >
+                      {item.isEditing ? 'Save' : 'Edit'}
+                    </button>
+                    <button
+                      style={deleteButtonStyle}
+                      onClick={() => handleDeleteRow(rowIndex)}
+                    >
+                      Del
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
+
           </table>
+
+
+          <div style={controlsStyle}>
+            <button
+              style={{ ...buttonStyle, backgroundColor: '#28a745', color: 'white', fontSize: '16px', padding: '12px 24px' }}
+              onClick={handleAddRow}
+            >
+              Add Item
+            </button>
+          </div>
+
+          {/* Totals Section */}
+          <div style={{ width: '400px', marginLeft: 'auto', marginTop: '30px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td style={{ padding: '8px', fontWeight: 'bold', backgroundColor: '#f5f5f5', border: '1px solid #333' }}>
+                    Total Taxable
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', backgroundColor: '#f5f5f5', border: '1px solid #333' }}>
+                    ₹{parseFloat(calculations.totalTaxable).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333' }}>
+                    CGST {cgstRate}%
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    ₹{parseFloat(calculations.cgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333' }}>
+                    SGST {sgstRate}%
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    ₹{parseFloat(calculations.sgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333' }}>
+                    IGST {igstRate}%
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    ₹{parseFloat(calculations.igstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333' }}>
+                    Hallmarking Charges 9983 @ ₹{hallmarkingCharges.toFixed(2)}<br />
+                    <small>
+                      Pieces:
+                      <input
+                        type="number"
+                        style={{ ...inputStyle, width: '60px', marginLeft: '10px' }}
+                        value={hallmarkingPieces}
+                        onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
+                        min="0"
+                        step="1"
+                      />
+                    </small>
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
+                    CGST {hallmarkingCgst}%
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    ₹{parseFloat(calculations.hallmarkingCgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
+                    SGST {hallmarkingSgst}%
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    ₹{parseFloat(calculations.hallmarkingSgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
+                    IGST 0.0%
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    ₹0.00
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '8px', border: '1px solid #333' }}>
+                    Round off
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
+                    {parseFloat(calculations.roundOff) >= 0 ? '+' : ''}₹{calculations.roundOff}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '12px', fontWeight: 'bold', fontSize: '18px', backgroundColor: '#f0f0f0', border: '2px solid #333' }}>
+                    Grand Total
+                  </td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold', fontSize: '18px', backgroundColor: '#f0f0f0', border: '2px solid #333' }}>
+                    ₹{parseFloat(calculations.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Amount in Words */}
+          <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }}>
+            <strong>Amount in word(s):</strong><br />
+            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+              {calculations.grandTotalWords}
+            </span>
+          </div>
+
+          {/* Thank you message */}
+          <div style={{ textAlign: 'center', marginTop: '40px', color: '#666' }}>
+            <p style={{ margin: 0, fontSize: '16px' }}>Thank you for choosing MDKJ Jewellers!</p>
+          </div>
         </div>
 
-        {/* Amount in Words */}
-        <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }}>
-          <strong>Amount in word(s):</strong><br />
-          <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-            {calculations.grandTotalWords}
-          </span>
+        {/* Controls */}
+
+        <div style={controlsStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>CGST (%):</label>
+            <input
+              type="number"
+              style={{ ...inputStyle, width: '80px' }}
+              value={cgstRate}
+              onChange={(e) => setCgstRate(parseFloat(e.target.value) || 0)}
+              min="0"
+              step="0.1"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>SGST (%):</label>
+            <input
+              type="number"
+              style={{ ...inputStyle, width: '80px' }}
+              value={sgstRate}
+              onChange={(e) => setSgstRate(parseFloat(e.target.value) || 0)}
+              min="0"
+              step="0.1"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>IGST (%):</label>
+            <input
+              type="number"
+              style={{ ...inputStyle, width: '80px' }}
+              value={igstRate}
+              onChange={(e) => setIgstRate(parseFloat(e.target.value) || 0)}
+              min="0"
+              step="0.1"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Hallmark Rate (₹):</label>
+            <input
+              type="number"
+              style={{ ...inputStyle, width: '80px' }}
+              value={hallmarkingCharges}
+              onChange={(e) => setHallmarkingCharges(parseFloat(e.target.value) || 0)}
+              min="0"
+              step="0.01"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Pieces:</label>
+            <input
+              type="number"
+              style={{ ...inputStyle, width: '80px' }}
+              value={hallmarkingPieces}
+              onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
+              min="0"
+              step="1"
+            />
+          </div>
+          <div style={{ display: 'flex', alignSelf: "center", alignItems: 'right', gap: '8px' }}>
+            <button
+              style={{ ...buttonStyle, backgroundColor: '#ffc107', color: 'black', fontSize: '16px', padding: '12px 24px' }}
+              onClick={async () => {
+                // Validation checks
+                if (!billHeader.customerName || !billHeader.customerPhone || !billHeader.customerAddress) {
+                  alert('Please fill all mandatory customer details.');
+                  return;
+                }
+
+                const customerExists = customers.some(customer => customer.gstin === billHeader.customerGstin);
+                if (!customerExists && billHeader.customerGstin) {
+                  const confirmCreate = window.confirm(
+                    'The GSTIN provided does not exist in the database. Do you want to create a new customer?'
+                  );
+                  if (!confirmCreate) return;
+
+                  try {
+                    await addRecord('customer_details', {
+                      name: billHeader.customerName,
+                      phone: billHeader.customerPhone,
+                      address: billHeader.customerAddress,
+                      email: billHeader.customerEmail,
+                      gstin: billHeader.customerGstin
+                    });
+                    alert('New customer created successfully.');
+                  } catch (err) {
+                    console.error('Error creating customer:', err);
+                    alert('Failed to create new customer.');
+                    return;
+                  }
+                }
+
+                // Prepare bill data
+                const billData = items.map(item => ({
+                  entry_type: 'bill',
+                  gstin: billHeader.customerGstin || null,
+                  dated: billHeader.date,
+                  bank: false, // Assuming bank is false by default
+                  bill_no: billHeader.billNumber || 'N/A',
+                  purity: item.purity || 'N/A',
+                  wt: item.weight,
+                  rate: item.rate,
+                  cgst: ((item.amount * cgstRate) / 100).toFixed(2),
+                  sgst: ((item.amount * sgstRate) / 100).toFixed(2),
+                  igst: ((item.amount * igstRate) / 100).toFixed(2),
+                  weight: item.weight,
+                  cash_amount: item.amount.toFixed(2)
+                }));
+
+                try {
+                  console.log(billData);
+                  await insertUnifiedEntry(billData[0]);
+                  alert('Bill submitted successfully.');
+                } catch (err) {
+                  console.error('Error submitting bill:', err);
+                  alert('Failed to submit bill.');
+                }
+              }}
+            >
+              Submit Bill
+            </button>
+            <button
+              style={{ ...buttonStyle, backgroundColor: '#007bff', color: 'white', fontSize: '16px', padding: '12px 24px' }}
+              onClick={handlePrint}
+            >
+              Print Bill
+            </button>
+          </div>
         </div>
-
-        {/* Thank you message */}
-        <div style={{ textAlign: 'center', marginTop: '40px', color: '#666' }}>
-          <p style={{ margin: 0, fontSize: '16px' }}>Thank you for choosing MDKJ Jewellers!</p>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div style={controlsStyle}>
-        <button
-          style={{ ...buttonStyle, backgroundColor: '#28a745', color: 'white', fontSize: '16px', padding: '12px 24px' }}
-          onClick={handleAddRow}
-        >
-          Add Item
-        </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>CGST (%):</label>
-          <input
-            type="number"
-            style={{ ...inputStyle, width: '80px' }}
-            value={cgstRate}
-            onChange={(e) => setCgstRate(parseFloat(e.target.value) || 0)}
-            min="0"
-            step="0.1"
-          />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>SGST (%):</label>
-          <input
-            type="number"
-            style={{ ...inputStyle, width: '80px' }}
-            value={sgstRate}
-            onChange={(e) => setSgstRate(parseFloat(e.target.value) || 0)}
-            min="0"
-            step="0.1"
-          />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>IGST (%):</label>
-          <input
-            type="number"
-            style={{ ...inputStyle, width: '80px' }}
-            value={igstRate}
-            onChange={(e) => setIgstRate(parseFloat(e.target.value) || 0)}
-            min="0"
-            step="0.1"
-          />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Hallmark Rate (₹):</label>
-          <input
-            type="number"
-            style={{ ...inputStyle, width: '80px' }}
-            value={hallmarkingCharges}
-            onChange={(e) => setHallmarkingCharges(parseFloat(e.target.value) || 0)}
-            min="0"
-            step="0.01"
-          />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Pieces:</label>
-          <input
-            type="number"
-            style={{ ...inputStyle, width: '80px' }}
-            value={hallmarkingPieces}
-            onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
-            min="0"
-            step="1"
-          />
-        </div>
-
-        <button
-          style={{ ...buttonStyle, backgroundColor: '#007bff', color: 'white', fontSize: '16px', padding: '12px 24px' }}
-          onClick={handlePrint}
-        >
-          Print Bill
-        </button>
       </div>
 
       {/* Usage Instructions */}
