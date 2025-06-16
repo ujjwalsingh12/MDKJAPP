@@ -1,0 +1,31 @@
+.sidebar {
+    width: 250px; /* Fixed width for sidebar */
+    height: 100vh; /* Full viewport height */
+    position: fixed; /* Fixed position */
+    top: 0;
+    left: 0;
+    background-color: #f8f9fa; /* Light background */
+    border-right: 1px solid #dee2e6; /* Border for separation */
+    transition: transform 0.3s ease; /* Smooth transition for open/close */
+    overflow: auto; /* Enable scrolling if content overflows */
+  }
+  
+  .sidebar.closed {
+    transform: translateX(-100%); /* Move sidebar off-screen */
+  }
+  
+  .sidebar.open {
+    transform: translateX(0); /* Show sidebar */
+  }
+  
+  .nav-item {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  .nav-item:hover {
+    background-color: #e9ecef; /* Hover effect */
+  }
+  

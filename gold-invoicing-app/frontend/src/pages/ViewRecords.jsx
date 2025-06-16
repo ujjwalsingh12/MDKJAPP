@@ -8,8 +8,9 @@ export default function ViewRecords() {
     const [records, setRecords] = useState([]);
 
     useEffect(() => {
-        axios.get(`http://localhost:5003/${table}/all`)
-            .then(res => setRecords(res.data.records || []))
+        axios.get(`http://localhost:5003/api/queries/${table}/all`)
+            .then(res => setRecords(res.data || []))
+            // .then(res => console.log(res.data))
             .catch(err => console.error(err));
     }, [table]);
 

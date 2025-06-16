@@ -1,0 +1,504 @@
+/* Container Styles */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Section Header Styles */
+.header-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.header-section h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 28px;
+    /* Added for consistency, was previously inline */
+    border-bottom: 2px solid #e9ecef;
+    /* Added for consistency, was previously inline */
+    padding-bottom: 15px;
+    /* Added for consistency, was previously inline */
+}
+
+/* Form Grid Styles */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* Label and Input Styles */
+.label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+    /* Ensures padding doesn't increase total width */
+    transition: all 0.3s ease;
+    /* Added for better UX */
+}
+
+.input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+textarea.input {
+    min-height: 60px;
+    /* Added for consistency */
+    resize: vertical;
+    /* Added for consistency */
+}
+
+/* Customer Dropdown Styles (retained from previous comprehensive CSS) */
+.customer-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.customer-option {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.customer-option:last-child {
+    border-bottom: none;
+}
+
+.customer-option:hover {
+    background-color: #f0f0f0;
+}
+
+.customer-option strong {
+    color: #333;
+}
+
+.customer-option small {
+    color: #777;
+}
+
+/* Bill Preview Section */
+.bill-preview {
+    border: 2px solid #333;
+    padding: 40px;
+    background-color: #ffffff;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    /* Retained for aesthetics */
+    border-radius: 10px;
+    /* Retained for aesthetics */
+}
+
+/* Bill Header Info (retain some inline for clarity if needed, or move to classes) */
+.bill-preview h1 {
+    font-size: 36px;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.bill-preview h2 {
+    font-size: 24px;
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.bill-preview .store-info p {
+    margin: 5px 0;
+    color: #666;
+    line-height: 1.4;
+}
+
+.bill-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    /* Retained for clarity */
+    padding-bottom: 15px;
+    /* Retained for clarity */
+}
+
+.bill-info h3 {
+    margin: 0 0 10px 0;
+    font-weight: bold;
+    color: #333;
+}
+
+.bill-info p {
+    margin: 5px 0;
+    font-size: 16px;
+    color: #555;
+}
+
+.bill-info p strong {
+    color: #333;
+}
+
+/* Items Table */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.table th {
+    border: 1px solid #333;
+    padding: 12px 8px;
+    background-color: #f5f5f5;
+    font-weight: bold;
+    text-align: left;
+    white-space: nowrap;
+    /* Prevent wrapping for headers */
+}
+
+.table td {
+    border: 1px solid #333;
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease;
+    /* Retained from previous comprehensive CSS */
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    /* Retained from previous comprehensive CSS */
+}
+
+.table tbody tr.selected-row {
+    background-color: #e3f2fd;
+    /* Retained from previous comprehensive CSS */
+}
+
+.table td span {
+    display: block;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.table td input {
+    width: calc(100% - 8px);
+    /* Adjust for padding */
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Buttons */
+.button {
+    padding: 8px 16px;
+    margin: 0 4px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.edit-button {
+    background-color: #007bff;
+    color: white;
+}
+
+.edit-button:hover {
+    transform: translateY(-1px);
+    background-color: #0056b3;
+}
+
+.save-button {
+    background-color: #28a745;
+    color: white;
+}
+
+.save-button:hover {
+    transform: translateY(-1px);
+    background-color: #218838;
+}
+
+.delete-button {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-button:hover {
+    transform: translateY(-1px);
+    background-color: #c82333;
+}
+
+/* Controls Section */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.controls button {
+    /* Generic button style within controls */
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+
+.controls button:hover {
+    transform: translateY(-2px);
+}
+
+.add-item-button {
+    /* Specific button style, like add item */
+    background-color: #28a745;
+    color: white;
+}
+
+.add-item-button:hover {
+    background-color: #218838;
+}
+
+.print-bill-button {
+    /* Specific button style, like print */
+    background-color: #007bff;
+    color: white;
+}
+
+.print-bill-button:hover {
+    background-color: #0056b3;
+}
+
+.controls .input-group {
+    /* Grouping for labels and inputs in controls */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.controls .input-group label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
+}
+
+.controls .input-group input {
+    width: 80px;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 15px;
+    text-align: center;
+}
+
+
+/* Totals Section */
+.totals-section {
+    margin-left: auto;
+    width: 350px;
+    border: 1px solid #333;
+    /* This border will apply to the div itself */
+    margin-top: 30px;
+    /* Added for spacing */
+}
+
+.totals-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.totals-table td {
+    padding: 10px 12px;
+    border: 1px solid #dee2e6;
+    text-align: right;
+    font-size: 15px;
+}
+
+.totals-table tr:first-child td {
+    font-weight: bold;
+    background-color: #f5f5f5;
+}
+
+.totals-table tr:nth-child(even) td {
+    background-color: #fcfcfc;
+}
+
+.totals-table tr:last-child td {
+    font-weight: bold;
+    font-size: 18px;
+    background-color: #e9ecef;
+    border: 2px solid #333;
+}
+
+.totals-table small {
+    font-size: 12px;
+    color: #777;
+}
+
+/* Amount in Words */
+.amount-in-words {
+    margin-top: 30px;
+    padding: 18px;
+    background-color: #f9f9f9;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    color: #333;
+}
+
+.amount-in-words strong {
+    color: #555;
+    font-size: 15px;
+}
+
+.amount-in-words span {
+    font-size: 17px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Thank you message */
+.thank-you-message {
+    text-align: center;
+    margin-top: 40px;
+    color: #666;
+    font-size: 16px;
+    padding-top: 15px;
+    border-top: 1px dashed #ced4da;
+}
+
+/* Usage Instructions (from previous comprehensive CSS) */
+.usage-instructions {
+    margin-top: 30px;
+    padding: 25px;
+    background-color: #e3f2fd;
+    border-radius: 10px;
+    border: 1px solid #90caf9;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+}
+
+.usage-instructions h3 {
+    margin: 0 0 15px 0;
+    color: #1976d2;
+    font-size: 22px;
+}
+
+.usage-instructions ul {
+    margin: 0;
+    padding-left: 25px;
+    color: #444;
+    line-height: 1.8;
+    list-style-type: disc;
+}
+
+.usage-instructions li {
+    margin-bottom: 8px;
+}
+
+/* Print Specific Styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .bill-preview,
+    .bill-preview * {
+        visibility: visible;
+    }
+
+    .bill-preview {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border: none;
+    }
+
+    .print-hide {
+        display: none !important;
+    }
+
+    .container {
+        padding: 0;
+        box-shadow: none;
+    }
+
+    .header-section,
+    .controls,
+    .usage-instructions {
+        display: none;
+    }
+
+    .table th,
+    .table td {
+        padding: 8px 6px;
+        /* Smaller padding for print */
+        font-size: 13px;
+        /* Smaller font for print */
+    }
+
+    .bill-preview h1 {
+        font-size: 28px;
+    }
+
+    .bill-preview h2 {
+        font-size: 20px;
+    }
+
+    .bill-info p {
+        font-size: 13px;
+    }
+
+    .totals-table td {
+        font-size: 13px;
+        padding: 6px 8px;
+    }
+
+    .totals-table tr:last-child td {
+        font-size: 16px;
+    }
+
+    .amount-in-words span {
+        font-size: 14px;
+    }
+}

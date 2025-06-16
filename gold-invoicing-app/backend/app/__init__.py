@@ -14,19 +14,22 @@
 #     app.register_blueprint(entries_bp)
 
 #     return app
-
 from flask import Flask
 from config import Config
-from db import db, init_db  # updated import
+from db import db, init_db
+from flask_cors import CORS  # ✅ Add this import
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Initialize both SQLAlchemy and raw connection engine
+    # ✅ Enable CORS for all routes (customize origin as needed)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+    # Initialize database connections
     init_db(app)
 
-    # Import and register each route blueprint
+    # Register blueprints
     from app.routes.entries import entries_bp
     from app.routes.customer import customer_bp
     from app.routes.queries import queries_bp
