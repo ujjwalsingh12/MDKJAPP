@@ -11,44 +11,44 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboardx from './components/Dashboardx';
 import Sales from './components/Sales';
-// import Purchase from './components/Purchase';
-import Stock from './components/Stock';
 import Bills from './components/Bills';
 import Receipt from './components/Receipt';
 import UnifiedEntryForm from './components/UnifiedEntryForm';
 // import ExcelInterface from './components/ExcelInterface';
-// import CreateBill from './components/CreateBill';
 import ReceiptPage from './components/ReceiptPage';
+import Accounts from './pages/Accounts';
+import ViewTables from './components/ViewTables';
+import Stock from './pages/Stock';
+import Journal from './pages/Journal';
+import Bill from './pages/Bill';
+
 
 const AppRoutes = () => (
     <Router>
 
-        <NavBar />
         <Header />
-        <Dashboard />
+        <NavBar />
         <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/UnifiedEntryForm" element={<UnifiedEntryForm />} />
             <Route path="/add" element={<AddEntry />} />
-            <Route path="/view/:table" element={<ViewRecords />} />
+            <Route path="view/stock" element={<Stock />} />
+            <Route path="view/bill" element={<Bill />} />
+            <Route path="view/journal" element={<Journal />} />
             <Route path="/sales" element={<Sales />} />
-            {/* <Route path="/purchase" element={<Purchase />} /> */}
             <Route path="/stock" element={<Stock />} />
             <Route path="/bills" element={<Bills />} />
             <Route path="/receipt" element={<Receipt />} />
-            {/* <Route path="/excel" element={<ExcelInterface />} /> */}
-            {/* <Route path="/create-bill" element={<CreateBill />} /> */}
             <Route path="/receipt-page" element={<ReceiptPage />} />
             <Route path="/entry-dashboard" element={<EntryDashboard />} />
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/view-tables" element={<ViewTables />} />
         </Routes>
     </Router>
 );
 
 
 export default AppRoutes;
-// const AppRoutes = () => (
-//     <Dashboard />    
-// );
 
 
 

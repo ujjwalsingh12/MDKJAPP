@@ -5,7 +5,7 @@ import AppRoutes from './routes';
 import App from './App';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    {/* <App /> */}
     <AppRoutes />
   </React.StrictMode>
 );

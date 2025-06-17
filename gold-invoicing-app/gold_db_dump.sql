@@ -406,9 +406,9 @@ CREATE TABLE public.cash (
     id integer NOT NULL,
     dated date NOT NULL,
     gstin character varying(15) NOT NULL,
-    amount numeric(12,2),
+    amount numeric(12,2) DEFAULT 0,
     bank boolean DEFAULT false,
-    is_debit boolean
+    is_debit boolean DEFAULT NULL
 );
 
 
@@ -442,10 +442,10 @@ ALTER SEQUENCE public.cash_id_seq OWNED BY public.cash.id;
 
 CREATE TABLE public.customer_details (
     gstin character varying(15) NOT NULL,
-    name character varying(100),
-    address text,
-    phone character varying(15),
-    email character varying(100)
+    name character varying(100) NOT NULL,
+    address text DEFAULT NULL,
+    phone character varying(15) DEFAULT NULL,
+    email character varying(100) DEFAULT NULL
 );
 
 
@@ -457,12 +457,12 @@ ALTER TABLE public.customer_details OWNER TO postgres;
 
 CREATE TABLE public.gold (
     id integer NOT NULL,
-    dated date,
+    dated date DEFAULT CURRENT_DATE NOT NULL,
     gstin text NOT NULL,
     purity text NOT NULL,
     weight numeric DEFAULT 0,
     is_bank boolean DEFAULT false,
-    is_debit boolean
+    is_debit boolean DEFAULT NULL
 );
 
 
@@ -498,12 +498,12 @@ CREATE TABLE public.journal (
     id timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     gstin character varying(15) NOT NULL,
     entry_type character varying(20) NOT NULL,
-    amount numeric(12,2),
-    remark_id integer,
-    dated date,
+    amount numeric(12,2) DEFAULT 0,
+    remark_id integer DEFAULT NULL,
+    dated date DEFAULT CURRENT_DATE,
     bank boolean DEFAULT false,
-    entry_id integer,
-    is_debit boolean,
+    entry_id integer DEFAULT NULL,
+    is_debit boolean DEFAULT NULL,
     CONSTRAINT journal_entry_type_check CHECK (((entry_type)::text = ANY (ARRAY[('stock'::character varying)::text, ('gold'::character varying)::text, ('bill'::character varying)::text, ('remarks'::character varying)::text, ('cash'::character varying)::text])))
 );
 
@@ -535,8 +535,8 @@ ALTER TABLE public.journal_entry OWNER TO postgres;
 
 CREATE TABLE public.remarks (
     remark_id integer NOT NULL,
-    gstin character varying(15),
-    remark text
+    gstin character varying(15) NOT NULL,
+    remark text NOT NULL
 );
 
 
@@ -570,12 +570,12 @@ ALTER SEQUENCE public.remarks_remark_id_seq OWNED BY public.remarks.remark_id;
 
 CREATE TABLE public.stock (
     id integer NOT NULL,
-    dated date,
+    dated date DEFAULT CURRENT_DATE,
     gstin character varying(15) NOT NULL,
     purity character varying(10) DEFAULT '75ct'::character varying NOT NULL,
     weight numeric(10,3) DEFAULT 0 NOT NULL,
     bank boolean DEFAULT false,
-    is_debit boolean
+    is_debit boolean DEFAULT NULL
 );
 
 

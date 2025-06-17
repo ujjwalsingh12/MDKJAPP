@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchAll } from "../api/index";
 
 const ViewTables = ({ tableName, initialParams = {} }) => {
+    // const [searchParams] = useSearchParams();
+    // const tableName = searchParams.get('table');
+    // const pageSize = searchParams.get('pageSize');
+
+    // const [table, setTable] = useState(tableName);
+
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);

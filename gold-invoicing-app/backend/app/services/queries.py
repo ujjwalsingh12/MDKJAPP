@@ -7,6 +7,7 @@ from sqlalchemy.sql import text
 from typing import Optional, Union, Dict, Any, List
 from decimal import Decimal
 from datetime import date
+import math  # Import math to use math.isnan
 
 def run_paginated_query(query, conn, params={}, page=1, page_size=20, sort_by=None, sort_order='asc'):
     base_query = query.strip().rstrip(';')
@@ -14,7 +15,16 @@ def run_paginated_query(query, conn, params={}, page=1, page_size=20, sort_by=No
         base_query += f" ORDER BY {sort_by} {sort_order.upper()}"
     offset = (page - 1) * page_size
     base_query += f" LIMIT {page_size} OFFSET {offset}"
+    
+    # Fetch data into a Pandas DataFrame
     df = pd.read_sql(text(base_query), conn, params=params)
+    df = df.astype(object).where(pd.notnull(df), None)
+
+    for col in df.columns:
+        for i in range(len(df)):
+            if pd.isna(df.at[i, col]):
+                df.at[i, col] = None
+    # Convert DataFrame to JSON format
     return df.to_dict(orient="records")
 
 
@@ -37,21 +47,7 @@ def get_table_data(table_name, page=1, page_size=20, sort_by=None, sort_order='a
         return result
     finally:
         conn.close()
-
-
-def get_data_by_gstin(table_name, gstin):
-    conn = get_db_connection()
-    try:
-        df = pd.read_sql(
-            text(f"SELECT * FROM {table_name} WHERE gstin = :gstin"),
-            conn,
-            params={"gstin": gstin}
-        )
-        return df.to_dict(orient="records")
-    finally:
-        conn.close()
-
-
+        
 def insert_record(table_name, data):
     conn = get_db_connection()
     cols = ', '.join(data.keys())
@@ -96,6 +92,758 @@ def delete_record_by_id(table_name, record_id):
         return {"status": "error", "message": str(e)}
     finally:
         conn.close()
+
+def unified_insert_journal_entry(
+    entry_type_or_data,  # Can be string (entry_type) or dict (data)
+    gstin: Optional[str] = None,
+    is_debit: Optional[bool] = None,  # NEW REQUIRED PARAMETER
+    dated: Optional[date] = None,
+    bank: bool = False,
+    remark_text: Optional[str] = None,
+    bill_no: Optional[str] = None,
+    purity: Optional[str] = None,
+    wt: Optional[Union[float, Decimal]] = None,
+    rate: Optional[Union[float, Decimal]] = None,
+    cgst: Optional[Union[float, Decimal]] = None,
+    sgst: Optional[Union[float, Decimal]] = None,
+    igst: Optional[Union[float, Decimal]] = None,
+    weight: Optional[Union[float, Decimal]] = None,
+    cash_amount: Optional[Union[float, Decimal]] = None,
+    use_entry_table: bool = False  # For backward compatibility
+) -> Dict[str, Any]:
+    """
+    Python wrapper to call the PostgreSQL unified_insert_journal_entry function.
+    
+    Args:
+        entry_type_or_data: Either a string (entry_type) or dict containing all data
+        gstin: GST identification number (if not using dict)
+        is_debit: Whether the entry is a debit transaction (required)
+        dated: Date of entry (defaults to current date)
+        bank: Whether this is a bank transaction
+        remark_text: Optional remark text
+        bill_no: Bill number (required for 'bill' type)
+        purity: Purity specification
+        wt: Weight (required for 'bill' type)
+        rate: Rate (required for 'bill' type)
+        cgst: Central GST amount
+        sgst: State GST amount
+        igst: Integrated GST amount
+        weight: Weight (required for 'stock'/'gold' types)
+        cash_amount: Cash amount (required for 'cash' type)
+        use_entry_table: For backward compatibility (ignored)
+    
+    Returns:
+        Dict containing status and results from the SQL function
+    """
+    
+    conn = get_db_connection()
+    if not conn:
+        return {"status": "error", "message": "Failed to get a database connection."}
+    
+    # Start a transaction explicitly
+    trans = conn.begin()
+    
+    try:
+        # Handle both dict and individual parameter formats
+        if isinstance(entry_type_or_data, dict):
+            # Extract parameters from dictionary
+            data = entry_type_or_data
+            entry_type = data.get('entry_type')
+            gstin = data.get('gstin')
+            is_debit = data.get('is_debit')  # NEW REQUIRED PARAMETER
+            dated = data.get('dated')
+            bank = data.get('is_bank', data.get('bank', False))
+            remark_text = data.get('remark_text')
+            bill_no = data.get('bill_no')
+            purity = data.get('purity')
+            wt = data.get('wt')
+            rate = data.get('rate')
+            cgst = data.get('cgst')
+            sgst = data.get('sgst')
+            igst = data.get('igst')
+            weight = data.get('weight')
+            cash_amount = data.get('cash_amount', data.get('amount'))  # Handle both 'cash_amount' and 'amount'
+        else:
+            # Use individual parameters
+            entry_type = entry_type_or_data
+        
+        # Handle date conversion if it's a string
+        if isinstance(dated, str):
+            from datetime import datetime
+            dated = datetime.strptime(dated, '%Y-%m-%d').date()
+        
+        # Set default date if not provided
+        if dated is None:
+            dated = date.today()
+        
+        # Call the PostgreSQL function
+        query = text("""
+            SELECT * FROM public.unified_insert_journal_entry(
+                p_entry_type := :entry_type,
+                p_gstin := :gstin,
+                p_is_debit := :is_debit,  -- NEW REQUIRED PARAMETER
+                p_dated := :dated,
+                p_bank := :bank,
+                p_remark_text := :remark_text,
+                p_bill_no := :bill_no,
+                p_purity := :purity,
+                p_wt := :wt,
+                p_rate := :rate,
+                p_cgst := :cgst,
+                p_sgst := :sgst,
+                p_igst := :igst,
+                p_weight := :weight,
+                p_cash_amount := :cash_amount
+            )
+        """)
+        
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        
+        # Create debug query (be careful with None values)
+        def safe_format(value):
+            if value is None:
+                return 'NULL'
+            elif isinstance(value, str):
+                return f"'{value}'"
+            elif isinstance(value, bool):
+                return str(value).lower()
+            else:
+                return str(value)
+        
+        query2 = f"""
+            SELECT * FROM public.unified_insert_journal_entry(
+                p_entry_type := {safe_format(entry_type)},
+                p_gstin := {safe_format(gstin)},
+                p_is_debit := {safe_format(is_debit)},  -- NEW REQUIRED PARAMETER
+                p_dated := {safe_format(dated)},
+                p_bank := {safe_format(bank)},
+                p_remark_text := {safe_format(remark_text)},
+                p_bill_no := {safe_format(bill_no)},
+                p_purity := {safe_format(purity)},
+                p_wt := {safe_format(wt)},
+                p_rate := {safe_format(rate)},
+                p_cgst := {safe_format(cgst)},
+                p_sgst := {safe_format(sgst)},
+                p_igst := {safe_format(igst)},
+                p_weight := {safe_format(weight)},
+                p_cash_amount := {safe_format(cash_amount)}
+            )
+        """
+        
+        try:
+            logging.info(f"Executing query: {query2}")
+        except Exception as e:
+            logging.info("Failed to log query parameters, continuing with execution")
+            logging.error(f"Error occurred during query logging: {str(e)}", exc_info=True)
+        
+        logging.info("Query execution started")
+         
+        # Execute the query
+        result = conn.execute(query, {
+            'entry_type': entry_type,
+            'gstin': gstin,
+            'is_debit': is_debit,  # NEW REQUIRED PARAMETER
+            'dated': dated,
+            'bank': bank,
+            'remark_text': remark_text,
+            'bill_no': bill_no,
+            'purity': purity,
+            'wt': wt,
+            'rate': rate,
+            'cgst': cgst,
+            'sgst': sgst,
+            'igst': igst,
+            'weight': weight,
+            'cash_amount': cash_amount
+        })
+        
+        # Fetch the result
+        row = result.fetchone()
+        logging.info(f"Query executed successfully, fetched row: {row}")
+        
+        if row:
+            # CRITICAL: Commit the transaction before returning success
+            trans.commit()
+            logging.info("Transaction committed successfully")
+            
+            return {
+                "status": "success",
+                "journal_ts": row[0],          # journal_ts
+                "entry_type": row[1],          # returned_entry_type
+                "entry_id": row[2],            # returned_entry_id
+                "amount": row[3],              # returned_amount
+                "remark_id": row[4],           # returned_remark_id
+                "is_debit": row[5]             # returned_is_debit
+            }
+        else:
+            # Rollback if no result
+            trans.rollback()
+            logging.error("No result returned from function - rolling back transaction")
+            return {"status": "error", "message": "No result returned from function"}
+            
+    except Exception as e:
+        # Rollback transaction on error
+        try:
+            trans.rollback()
+            logging.error("Transaction rolled back due to error")
+        except:
+            logging.error("Failed to rollback transaction")
+        
+        error_msg = str(e)
+        logging.error(f"Database error: {error_msg}", exc_info=True)
+        return {
+            "status": "error", 
+            "message": f"Database error: {error_msg}",
+            "error_type": type(e).__name__
+        }
+        
+    finally:
+        # Close the connection
+        try:
+            conn.close()
+            logging.info("Database connection closed")
+        except Exception as close_error:
+            logging.error(f"Error closing connection: {close_error}")
+
+def get_table_schema(table_name: str) -> Dict[str, Any]:
+    """
+    Fetch the schema details of a given table from the PostgreSQL database.
+
+    Args:
+        table_name: Name of the table whose schema details are to be fetched.
+
+    Returns:
+        A dictionary containing the schema details or an error message.
+    """
+    conn = get_db_connection()
+    if not conn:
+        return {"status": "error", "message": "Failed to get database connection"}
+    
+    try:
+        query = text("""
+            SELECT column_name, data_type, is_nullable, character_maximum_length
+            FROM information_schema.columns
+            WHERE table_name = :table_name
+        """)
+        result = conn.execute(query, {"table_name": table_name}).mappings()  # Use .mappings() for dictionary-like rows
+        
+        schema_details = []
+        for row in result:
+            schema_details.append({
+                "column_name": row["column_name"],
+                "data_type": row["data_type"],
+                "is_nullable": row["is_nullable"],
+                "character_maximum_length": row["character_maximum_length"]
+            })
+        
+        return {"status": "success", "schema": schema_details}
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+        
+    finally:
+        conn.close()
+if __name__ == "__main__":
+    global get_db_connection,db,engine,Session
+    
+    from flask_sqlalchemy import SQLAlchemy
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import scoped_session, sessionmaker
+    from sqlalchemy.sql import text
+
+    db = SQLAlchemy()
+    engine = None
+    Session = None
+    config = dict()
+    config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:mysecret@db:5432/gold_db"
+    def init_db(app):
+        global engine, Session
+        db.init_app(app)
+        engine = create_engine(config["SQLALCHEMY_DATABASE_URI"])
+        Session = scoped_session(sessionmaker(bind=engine))
+
+    def get_db_connectionx():
+        return engine.connect()
+    get_db_connection = get_db_connectionx
+    # Initialize the database connection
+    # Run diagnostics
+    print("=== Diagnostics ===")
+    diag_result = diagnose_cash_table()
+    print("Cash Table Diagnostics:", diag_result)
+    
+    test_result = test_cash_insert()
+    print("Cash Insert Test:", test_result)
+    
+    # Run examples (uncomment to test)
+    # print("\n=== Examples ===")
+    # example_usage()
+
+# Example usage and testing functions
+# def example_usage():
+#     """
+#     Example usage of the journal entry functions.
+#     """
+    
+#     # Example 1: Insert a bill entry
+#     bill_result = insert_bill_entry(
+#         gstin="12ABCDE1234F1Z5",
+#         bill_no="BILL001",
+#         wt=10.5,
+#         rate=5000.00,
+#         purity="22K",
+#         bank=True,
+#         remark_text="Gold purchase from supplier A"
+#     )
+#     print("Bill Entry Result:", bill_result)
+    
+#     # Example 2: Insert a cash entry
+#     cash_result = insert_cash_entry(
+#         gstin="12ABCDE1234F1Z5",
+#         cash_amount=25000.00,
+#         bank=False,
+#         remark_text="Cash deposit"
+#     )
+#     print("Cash Entry Result:", cash_result)
+    
+#     # Example 3: Insert a stock entry
+#     stock_result = insert_stock_entry(
+#         gstin="12ABCDE1234F1Z5",
+#         weight=15.75,
+#         purity="24K",
+#         entry_type="gold",
+#         remark_text="Gold stock addition"
+#     )
+#     print("Stock Entry Result:", stock_result)
+    
+#     # Example 4: Using dictionary approach
+#     entry_data = {
+#         'entry_type': 'cash',
+#         'gstin': '12ABCDE1234F1Z5',
+#         'cash_amount': 10000.00,
+#         'bank': True,
+#         'remark_text': 'Bank deposit'
+#     }
+#     dict_result = unified_insert_journal_entry(entry_data)
+#     print("Dictionary Entry Result:", dict_result)
+    
+#     # Example 5: Batch insert
+#     batch_entries = [
+#         {
+#             'entry_type': 'cash',
+#             'gstin': '12ABCDE1234F1Z5',
+#             'cash_amount': 5000.00,
+#             'remark_text': 'Cash entry 1'
+#         },
+#         {
+#             'entry_type': 'cash',
+#             'gstin': '12ABCDE1234F1Z5',
+#             'cash_amount': 7500.00,
+#             'remark_text': 'Cash entry 2'
+#         }
+#     ]
+#     batch_result = batch_insert_journal_entries(batch_entries)
+    # print("Batch Insert Result:", batch_result)
+
+
+# def batch_insert_journal_entries(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
+#     """
+#     Insert multiple journal entries in sequence.
+    
+#     Args:
+#         entries: List of dictionaries, each containing parameters for an entry
+        
+#     Returns:
+#         Dict with overall status and individual results
+#     """
+#     results = []
+#     successful = 0
+#     failed = 0
+    
+#     for i, entry_data in enumerate(entries):
+#         try:
+#             result = unified_insert_journal_entry(entry_data)
+#             results.append({
+#                 "entry_index": i,
+#                 "entry_type": entry_data.get('entry_type'),
+#                 "result": result
+#             })
+            
+#             if result.get('status') == 'success':
+#                 successful += 1
+#             else:
+#                 failed += 1
+                
+#         except Exception as e:
+#             results.append({
+#                 "entry_index": i,
+#                 "entry_type": entry_data.get('entry_type'),
+#                 "result": {"status": "error", "message": str(e)}
+#             })
+#             failed += 1
+    
+#     return {
+#         "status": "completed",
+#         "summary": {
+#             "total": len(entries),
+#             "successful": successful,
+#             "failed": failed
+#         },
+#         "results": results
+#     }
+
+
+
+# def test_cash_insert() -> Dict[str, Any]:
+#     """
+#     Call the test function to verify cash table functionality.
+#     """
+#     conn = get_db_connection()
+#     if not conn:
+#         return {"status": "error", "message": "Failed to get database connection"}
+    
+#     try:
+#         query = text("SELECT public.test_cash_insert()")
+#         result = conn.execute(query)
+        
+#         test_result = result.fetchone()[0]
+        
+#         return {
+#             "status": "success" if "SUCCESS" in test_result else "error",
+#             "message": test_result
+#         }
+        
+#     except Exception as e:
+#         return {"status": "error", "message": str(e)}
+        
+#     finally:
+#         conn.close()
+
+
+
+# def diagnose_cash_table() -> Dict[str, Any]:
+#     """
+#     Call the diagnostic function to check cash table status.
+#     """
+#     conn = get_db_connection()
+#     if not conn:
+#         return {"status": "error", "message": "Failed to get database connection"}
+    
+#     try:
+#         query = text("SELECT * FROM public.diagnose_cash_table()")
+#         result = conn.execute(query)
+        
+#         diagnostics = []
+#         for row in result:
+#             diagnostics.append({
+#                 "check_type": row[0],
+#                 "result": row[1],
+#                 "details": row[2]
+#             })
+        
+#         return {"status": "success", "diagnostics": diagnostics}
+        
+#     except Exception as e:
+#         return {"status": "error", "message": str(e)}
+        
+#     finally:
+#         conn.close()
+
+
+
+
+# def unified_insert_journal_entry(
+#     entry_type_or_data,  # Can be string (entry_type) or dict (data)
+#     gstin: Optional[str] = None,
+#     dated: Optional[date] = None,
+#     bank: bool = False,
+#     remark_text: Optional[str] = None,
+#     bill_no: Optional[str] = None,
+#     purity: Optional[str] = None,
+#     wt: Optional[Union[float, Decimal]] = None,
+#     rate: Optional[Union[float, Decimal]] = None,
+#     cgst: Optional[Union[float, Decimal]] = None,
+#     sgst: Optional[Union[float, Decimal]] = None,
+#     igst: Optional[Union[float, Decimal]] = None,
+#     weight: Optional[Union[float, Decimal]] = None,
+#     cash_amount: Optional[Union[float, Decimal]] = None,
+#     use_entry_table: bool = False  # For backward compatibility
+# ) -> Dict[str, Any]:
+#     """
+#     Python wrapper to call the PostgreSQL unified_insert_journal_entry function.
+    
+#     Args:
+#         entry_type_or_data: Either a string (entry_type) or dict containing all data
+#         gstin: GST identification number (if not using dict)
+#         dated: Date of entry (defaults to current date)
+#         bank: Whether this is a bank transaction
+#         remark_text: Optional remark text
+#         bill_no: Bill number (required for 'bill' type)
+#         purity: Purity specification
+#         wt: Weight (required for 'bill' type)
+#         rate: Rate (required for 'bill' type)
+#         cgst: Central GST amount
+#         sgst: State GST amount
+#         igst: Integrated GST amount
+#         weight: Weight (required for 'stock'/'gold' types)
+#         cash_amount: Cash amount (required for 'cash' type)
+#         use_entry_table: For backward compatibility (ignored)
+    
+#     Returns:
+#         Dict containing status and results from the SQL function
+#     """
+    
+#     conn = get_db_connection()
+#     if not conn:
+#         return {"status": "error", "message": "Failed to get a database connection."}
+    
+#     try:
+#         # Handle both dict and individual parameter formats
+#         if isinstance(entry_type_or_data, dict):
+#             # Extract parameters from dictionary
+#             data = entry_type_or_data
+#             entry_type = data.get('entry_type')
+#             gstin = data.get('gstin')
+#             dated = data.get('dated')
+#             bank = data.get('is_bank', data.get('bank', False))
+#             remark_text = data.get('remark_text')
+#             bill_no = data.get('bill_no')
+#             purity = data.get('purity')
+#             wt = data.get('wt')
+#             rate = data.get('rate')
+#             cgst = data.get('cgst')
+#             sgst = data.get('sgst')
+#             igst = data.get('igst')
+#             weight = data.get('weight')
+#             cash_amount = data.get('cash_amount', data.get('amount'))  # Handle both 'cash_amount' and 'amount'
+#         else:
+#             # Use individual parameters
+#             entry_type = entry_type_or_data
+        
+#         # Handle date conversion if it's a string
+#         if isinstance(dated, str):
+#             from datetime import datetime
+#             dated = datetime.strptime(dated, '%Y-%m-%d').date()
+        
+#         # Set default date if not provided
+#         if dated is None:
+#             dated = date.today()
+        
+#         # Call the PostgreSQL function
+#         query = text("""
+#             SELECT * FROM public.unified_insert_journal_entry(
+#                 p_entry_type := :entry_type,
+#                 p_gstin := :gstin,
+#                 p_dated := :dated,
+#                 p_bank := :bank,
+#                 p_remark_text := :remark_text,
+#                 p_bill_no := :bill_no,
+#                 p_purity := :purity,
+#                 p_wt := :wt,
+#                 p_rate := :rate,
+#                 p_cgst := :cgst,
+#                 p_sgst := :sgst,
+#                 p_igst := :igst,
+#                 p_weight := :weight,
+#                 p_cash_amount := :cash_amount
+#             )
+#         """)
+#         import logging
+#         logging.basicConfig(level=logging.INFO)
+#         query2 = f"""
+#             SELECT * FROM public.unified_insert_journal_entry(
+#             p_entry_type := '{entry_type}',
+#             p_gstin := '{gstin}',
+#             p_dated := '{dated}',
+#             p_bank := {bank},
+#             p_remark_text := '{remark_text}',
+#             p_bill_no := '{bill_no}',
+#             p_purity := '{purity}',
+#             p_wt := {wt},
+#             p_rate := {rate},
+#             p_cgst := {cgst},
+#             p_sgst := {sgst},
+#             p_igst := {igst},
+#             p_weight := {weight},
+#             p_cash_amount := {cash_amount}
+#             )
+#         """
+#         try:
+#             logging.info(query2)
+#         except  Exception as e:
+#             logging.info("Failed to log query parameters, continuing with execution") 
+#             logging.error(f"Error occurred during unified_insert_journal_entry execution: {str(e)}", exc_info=True)
+       
+#         finally:
+#             logging.info("Query execution started")
+         
+#         # Log the query using Flask's logging system
+#         result = conn.execute(query, {
+#             'entry_type': entry_type,
+#             'gstin': gstin,
+#             'dated': dated,
+#             'bank': bank,
+#             'remark_text': remark_text,
+#             'bill_no': bill_no,
+#             'purity': purity,
+#             'wt': wt,
+#             'rate': rate,
+#             'cgst': cgst,
+#             'sgst': sgst,
+#             'igst': igst,
+#             'weight': weight,
+#             'cash_amount': cash_amount
+#         })
+#         # result = conn.execute(query2)
+        
+#         # Fetch the result
+#         row = result.fetchone()
+#         logging.info(f"Query executed successfully, fetched row: {row}")
+        
+#         if row:
+#             return {
+#                 "status": "success",
+#                 "journal_ts": row[0],          # journal_ts
+#                 "entry_type": row[1],          # returned_entry_type
+#                 "entry_id": row[2],            # returned_entry_id
+#                 "amount": row[3],              # returned_amount
+#                 "remark_id": row[4]            # returned_remark_id
+#             }
+#         else:
+#             return {"status": "error", "message": "No result returned from function"}
+            
+#     except Exception as e:
+#         error_msg = str(e)
+#         return {
+#             "status": "error", 
+#             "message": f"Database error: {error_msg}",
+#             "error_type": type(e).__name__
+#         }
+        
+#     finally:
+#         conn.close()
+
+
+# def unified_insert_journal_entry_from_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+#     """
+#     Wrapper that accepts a dictionary of parameters for easier integration.
+    
+#     Args:
+#         data: Dictionary containing all the parameters
+        
+#     Returns:
+#         Result from unified_insert_journal_entry function
+#     """
+#     return unified_insert_journal_entry(data)
+
+
+# # Backward compatibility function that matches your original signature
+# def unified_insert_journal_entry_legacy(data: Dict[str, Any], use_entry_table: bool = False) -> Dict[str, Any]:
+#     """
+#     Legacy function that matches the original signature for backward compatibility.
+    
+#     Args:
+#         data: Dictionary containing entry parameters
+#         use_entry_table: Whether to use entry table (ignored, maintained for compatibility)
+        
+#     Returns:
+#         Result from the PostgreSQL function
+#     """
+#     return unified_insert_journal_entry(data)
+
+
+# def insert_bill_entry(
+#     gstin: str,
+#     bill_no: str,
+#     wt: Union[float, Decimal],
+#     rate: Union[float, Decimal],
+#     purity: Optional[str] = None,
+#     dated: Optional[date] = None,
+#     bank: bool = False,
+#     remark_text: Optional[str] = None,
+#     cgst: Optional[Union[float, Decimal]] = None,
+#     sgst: Optional[Union[float, Decimal]] = None,
+#     igst: Optional[Union[float, Decimal]] = None
+# ) -> Dict[str, Any]:
+#     """
+#     Specialized function for inserting bill entries.
+#     """
+#     return unified_insert_journal_entry(
+#         entry_type='bill',
+#         gstin=gstin,
+#         bill_no=bill_no,
+#         wt=wt,
+#         rate=rate,
+#         purity=purity,
+#         dated=dated,
+#         bank=bank,
+#         remark_text=remark_text,
+#         cgst=cgst,
+#         sgst=sgst,
+#         igst=igst
+#     )
+
+
+# def insert_cash_entry(
+#     gstin: str,
+#     cash_amount: Union[float, Decimal],
+#     dated: Optional[date] = None,
+#     bank: bool = False,
+#     remark_text: Optional[str] = None
+# ) -> Dict[str, Any]:
+#     """
+#     Specialized function for inserting cash entries.
+#     """
+#     return unified_insert_journal_entry(
+#         entry_type='cash',
+#         gstin=gstin,
+#         cash_amount=cash_amount,
+#         dated=dated,
+#         bank=bank,
+#         remark_text=remark_text
+#     )
+
+
+# def insert_stock_entry(
+#     gstin: str,
+#     weight: Union[float, Decimal],
+#     purity: Optional[str] = None,
+#     dated: Optional[date] = None,
+#     bank: bool = False,
+#     remark_text: Optional[str] = None,
+#     entry_type: str = 'stock'  # can be 'stock' or 'gold'
+# ) -> Dict[str, Any]:
+#     """
+#     Specialized function for inserting stock/gold entries.
+#     """
+#     return unified_insert_journal_entry(
+#         entry_type=entry_type,
+#         gstin=gstin,
+#         weight=weight,
+#         purity=purity,
+#         dated=dated,
+#         bank=bank,
+#         remark_text=remark_text
+#     )
+
+
+# def insert_remark_entry(
+#     gstin: str,
+#     remark_text: str,
+#     dated: Optional[date] = None,
+#     bank: bool = False
+# ) -> Dict[str, Any]:
+#     """
+#     Specialized function for inserting remarks entries.
+#     """
+#     return unified_insert_journal_entry(
+#         entry_type='remarks',
+#         gstin=gstin,
+#         remark_text=remark_text,
+#         dated=dated,
+#         bank=bank
+#     )
+
 
 
 # def unified_insert_journal_entry(
@@ -463,749 +1211,18 @@ def delete_record_by_id(table_name, record_id):
         
 #     finally:
 #         conn.close()
-def unified_insert_journal_entry(
-    entry_type_or_data,  # Can be string (entry_type) or dict (data)
-    gstin: Optional[str] = None,
-    is_debit: Optional[bool] = None,  # NEW REQUIRED PARAMETER
-    dated: Optional[date] = None,
-    bank: bool = False,
-    remark_text: Optional[str] = None,
-    bill_no: Optional[str] = None,
-    purity: Optional[str] = None,
-    wt: Optional[Union[float, Decimal]] = None,
-    rate: Optional[Union[float, Decimal]] = None,
-    cgst: Optional[Union[float, Decimal]] = None,
-    sgst: Optional[Union[float, Decimal]] = None,
-    igst: Optional[Union[float, Decimal]] = None,
-    weight: Optional[Union[float, Decimal]] = None,
-    cash_amount: Optional[Union[float, Decimal]] = None,
-    use_entry_table: bool = False  # For backward compatibility
-) -> Dict[str, Any]:
-    """
-    Python wrapper to call the PostgreSQL unified_insert_journal_entry function.
-    
-    Args:
-        entry_type_or_data: Either a string (entry_type) or dict containing all data
-        gstin: GST identification number (if not using dict)
-        is_debit: Whether the entry is a debit transaction (required)
-        dated: Date of entry (defaults to current date)
-        bank: Whether this is a bank transaction
-        remark_text: Optional remark text
-        bill_no: Bill number (required for 'bill' type)
-        purity: Purity specification
-        wt: Weight (required for 'bill' type)
-        rate: Rate (required for 'bill' type)
-        cgst: Central GST amount
-        sgst: State GST amount
-        igst: Integrated GST amount
-        weight: Weight (required for 'stock'/'gold' types)
-        cash_amount: Cash amount (required for 'cash' type)
-        use_entry_table: For backward compatibility (ignored)
-    
-    Returns:
-        Dict containing status and results from the SQL function
-    """
-    
-    conn = get_db_connection()
-    if not conn:
-        return {"status": "error", "message": "Failed to get a database connection."}
-    
-    # Start a transaction explicitly
-    trans = conn.begin()
-    
-    try:
-        # Handle both dict and individual parameter formats
-        if isinstance(entry_type_or_data, dict):
-            # Extract parameters from dictionary
-            data = entry_type_or_data
-            entry_type = data.get('entry_type')
-            gstin = data.get('gstin')
-            is_debit = data.get('is_debit')  # NEW REQUIRED PARAMETER
-            dated = data.get('dated')
-            bank = data.get('is_bank', data.get('bank', False))
-            remark_text = data.get('remark_text')
-            bill_no = data.get('bill_no')
-            purity = data.get('purity')
-            wt = data.get('wt')
-            rate = data.get('rate')
-            cgst = data.get('cgst')
-            sgst = data.get('sgst')
-            igst = data.get('igst')
-            weight = data.get('weight')
-            cash_amount = data.get('cash_amount', data.get('amount'))  # Handle both 'cash_amount' and 'amount'
-        else:
-            # Use individual parameters
-            entry_type = entry_type_or_data
-        
-        # Handle date conversion if it's a string
-        if isinstance(dated, str):
-            from datetime import datetime
-            dated = datetime.strptime(dated, '%Y-%m-%d').date()
-        
-        # Set default date if not provided
-        if dated is None:
-            dated = date.today()
-        
-        # Call the PostgreSQL function
-        query = text("""
-            SELECT * FROM public.unified_insert_journal_entry(
-                p_entry_type := :entry_type,
-                p_gstin := :gstin,
-                p_is_debit := :is_debit,  -- NEW REQUIRED PARAMETER
-                p_dated := :dated,
-                p_bank := :bank,
-                p_remark_text := :remark_text,
-                p_bill_no := :bill_no,
-                p_purity := :purity,
-                p_wt := :wt,
-                p_rate := :rate,
-                p_cgst := :cgst,
-                p_sgst := :sgst,
-                p_igst := :igst,
-                p_weight := :weight,
-                p_cash_amount := :cash_amount
-            )
-        """)
-        
-        import logging
-        logging.basicConfig(level=logging.INFO)
-        
-        # Create debug query (be careful with None values)
-        def safe_format(value):
-            if value is None:
-                return 'NULL'
-            elif isinstance(value, str):
-                return f"'{value}'"
-            elif isinstance(value, bool):
-                return str(value).lower()
-            else:
-                return str(value)
-        
-        query2 = f"""
-            SELECT * FROM public.unified_insert_journal_entry(
-                p_entry_type := {safe_format(entry_type)},
-                p_gstin := {safe_format(gstin)},
-                p_is_debit := {safe_format(is_debit)},  -- NEW REQUIRED PARAMETER
-                p_dated := {safe_format(dated)},
-                p_bank := {safe_format(bank)},
-                p_remark_text := {safe_format(remark_text)},
-                p_bill_no := {safe_format(bill_no)},
-                p_purity := {safe_format(purity)},
-                p_wt := {safe_format(wt)},
-                p_rate := {safe_format(rate)},
-                p_cgst := {safe_format(cgst)},
-                p_sgst := {safe_format(sgst)},
-                p_igst := {safe_format(igst)},
-                p_weight := {safe_format(weight)},
-                p_cash_amount := {safe_format(cash_amount)}
-            )
-        """
-        
-        try:
-            logging.info(f"Executing query: {query2}")
-        except Exception as e:
-            logging.info("Failed to log query parameters, continuing with execution")
-            logging.error(f"Error occurred during query logging: {str(e)}", exc_info=True)
-        
-        logging.info("Query execution started")
-         
-        # Execute the query
-        result = conn.execute(query, {
-            'entry_type': entry_type,
-            'gstin': gstin,
-            'is_debit': is_debit,  # NEW REQUIRED PARAMETER
-            'dated': dated,
-            'bank': bank,
-            'remark_text': remark_text,
-            'bill_no': bill_no,
-            'purity': purity,
-            'wt': wt,
-            'rate': rate,
-            'cgst': cgst,
-            'sgst': sgst,
-            'igst': igst,
-            'weight': weight,
-            'cash_amount': cash_amount
-        })
-        
-        # Fetch the result
-        row = result.fetchone()
-        logging.info(f"Query executed successfully, fetched row: {row}")
-        
-        if row:
-            # CRITICAL: Commit the transaction before returning success
-            trans.commit()
-            logging.info("Transaction committed successfully")
-            
-            return {
-                "status": "success",
-                "journal_ts": row[0],          # journal_ts
-                "entry_type": row[1],          # returned_entry_type
-                "entry_id": row[2],            # returned_entry_id
-                "amount": row[3],              # returned_amount
-                "remark_id": row[4],           # returned_remark_id
-                "is_debit": row[5]             # returned_is_debit
-            }
-        else:
-            # Rollback if no result
-            trans.rollback()
-            logging.error("No result returned from function - rolling back transaction")
-            return {"status": "error", "message": "No result returned from function"}
-            
-    except Exception as e:
-        # Rollback transaction on error
-        try:
-            trans.rollback()
-            logging.error("Transaction rolled back due to error")
-        except:
-            logging.error("Failed to rollback transaction")
-        
-        error_msg = str(e)
-        logging.error(f"Database error: {error_msg}", exc_info=True)
-        return {
-            "status": "error", 
-            "message": f"Database error: {error_msg}",
-            "error_type": type(e).__name__
-        }
-        
-    finally:
-        # Close the connection
-        try:
-            conn.close()
-            logging.info("Database connection closed")
-        except Exception as close_error:
-            logging.error(f"Error closing connection: {close_error}")
 
-# def unified_insert_journal_entry(
-#     entry_type_or_data,  # Can be string (entry_type) or dict (data)
-#     gstin: Optional[str] = None,
-#     dated: Optional[date] = None,
-#     bank: bool = False,
-#     remark_text: Optional[str] = None,
-#     bill_no: Optional[str] = None,
-#     purity: Optional[str] = None,
-#     wt: Optional[Union[float, Decimal]] = None,
-#     rate: Optional[Union[float, Decimal]] = None,
-#     cgst: Optional[Union[float, Decimal]] = None,
-#     sgst: Optional[Union[float, Decimal]] = None,
-#     igst: Optional[Union[float, Decimal]] = None,
-#     weight: Optional[Union[float, Decimal]] = None,
-#     cash_amount: Optional[Union[float, Decimal]] = None,
-#     use_entry_table: bool = False  # For backward compatibility
-# ) -> Dict[str, Any]:
-#     """
-#     Python wrapper to call the PostgreSQL unified_insert_journal_entry function.
-    
-#     Args:
-#         entry_type_or_data: Either a string (entry_type) or dict containing all data
-#         gstin: GST identification number (if not using dict)
-#         dated: Date of entry (defaults to current date)
-#         bank: Whether this is a bank transaction
-#         remark_text: Optional remark text
-#         bill_no: Bill number (required for 'bill' type)
-#         purity: Purity specification
-#         wt: Weight (required for 'bill' type)
-#         rate: Rate (required for 'bill' type)
-#         cgst: Central GST amount
-#         sgst: State GST amount
-#         igst: Integrated GST amount
-#         weight: Weight (required for 'stock'/'gold' types)
-#         cash_amount: Cash amount (required for 'cash' type)
-#         use_entry_table: For backward compatibility (ignored)
-    
-#     Returns:
-#         Dict containing status and results from the SQL function
-#     """
-    
+
+
+# def get_data_by_gstin(table_name, gstin):
 #     conn = get_db_connection()
-#     if not conn:
-#         return {"status": "error", "message": "Failed to get a database connection."}
-    
 #     try:
-#         # Handle both dict and individual parameter formats
-#         if isinstance(entry_type_or_data, dict):
-#             # Extract parameters from dictionary
-#             data = entry_type_or_data
-#             entry_type = data.get('entry_type')
-#             gstin = data.get('gstin')
-#             dated = data.get('dated')
-#             bank = data.get('is_bank', data.get('bank', False))
-#             remark_text = data.get('remark_text')
-#             bill_no = data.get('bill_no')
-#             purity = data.get('purity')
-#             wt = data.get('wt')
-#             rate = data.get('rate')
-#             cgst = data.get('cgst')
-#             sgst = data.get('sgst')
-#             igst = data.get('igst')
-#             weight = data.get('weight')
-#             cash_amount = data.get('cash_amount', data.get('amount'))  # Handle both 'cash_amount' and 'amount'
-#         else:
-#             # Use individual parameters
-#             entry_type = entry_type_or_data
-        
-#         # Handle date conversion if it's a string
-#         if isinstance(dated, str):
-#             from datetime import datetime
-#             dated = datetime.strptime(dated, '%Y-%m-%d').date()
-        
-#         # Set default date if not provided
-#         if dated is None:
-#             dated = date.today()
-        
-#         # Call the PostgreSQL function
-#         query = text("""
-#             SELECT * FROM public.unified_insert_journal_entry(
-#                 p_entry_type := :entry_type,
-#                 p_gstin := :gstin,
-#                 p_dated := :dated,
-#                 p_bank := :bank,
-#                 p_remark_text := :remark_text,
-#                 p_bill_no := :bill_no,
-#                 p_purity := :purity,
-#                 p_wt := :wt,
-#                 p_rate := :rate,
-#                 p_cgst := :cgst,
-#                 p_sgst := :sgst,
-#                 p_igst := :igst,
-#                 p_weight := :weight,
-#                 p_cash_amount := :cash_amount
-#             )
-#         """)
-#         import logging
-#         logging.basicConfig(level=logging.INFO)
-#         query2 = f"""
-#             SELECT * FROM public.unified_insert_journal_entry(
-#             p_entry_type := '{entry_type}',
-#             p_gstin := '{gstin}',
-#             p_dated := '{dated}',
-#             p_bank := {bank},
-#             p_remark_text := '{remark_text}',
-#             p_bill_no := '{bill_no}',
-#             p_purity := '{purity}',
-#             p_wt := {wt},
-#             p_rate := {rate},
-#             p_cgst := {cgst},
-#             p_sgst := {sgst},
-#             p_igst := {igst},
-#             p_weight := {weight},
-#             p_cash_amount := {cash_amount}
-#             )
-#         """
-#         try:
-#             logging.info(query2)
-#         except  Exception as e:
-#             logging.info("Failed to log query parameters, continuing with execution") 
-#             logging.error(f"Error occurred during unified_insert_journal_entry execution: {str(e)}", exc_info=True)
-       
-#         finally:
-#             logging.info("Query execution started")
-         
-#         # Log the query using Flask's logging system
-#         result = conn.execute(query, {
-#             'entry_type': entry_type,
-#             'gstin': gstin,
-#             'dated': dated,
-#             'bank': bank,
-#             'remark_text': remark_text,
-#             'bill_no': bill_no,
-#             'purity': purity,
-#             'wt': wt,
-#             'rate': rate,
-#             'cgst': cgst,
-#             'sgst': sgst,
-#             'igst': igst,
-#             'weight': weight,
-#             'cash_amount': cash_amount
-#         })
-#         # result = conn.execute(query2)
-        
-#         # Fetch the result
-#         row = result.fetchone()
-#         logging.info(f"Query executed successfully, fetched row: {row}")
-        
-#         if row:
-#             return {
-#                 "status": "success",
-#                 "journal_ts": row[0],          # journal_ts
-#                 "entry_type": row[1],          # returned_entry_type
-#                 "entry_id": row[2],            # returned_entry_id
-#                 "amount": row[3],              # returned_amount
-#                 "remark_id": row[4]            # returned_remark_id
-#             }
-#         else:
-#             return {"status": "error", "message": "No result returned from function"}
-            
-#     except Exception as e:
-#         error_msg = str(e)
-#         return {
-#             "status": "error", 
-#             "message": f"Database error: {error_msg}",
-#             "error_type": type(e).__name__
-#         }
-        
+#         df = pd.read_sql(
+#             text(f"SELECT * FROM {table_name} WHERE gstin = :gstin"),
+#             conn,
+#             params={"gstin": gstin}
+#         )
+#         return df.to_dict(orient="records")
 #     finally:
 #         conn.close()
 
-
-def unified_insert_journal_entry_from_dict(data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Wrapper that accepts a dictionary of parameters for easier integration.
-    
-    Args:
-        data: Dictionary containing all the parameters
-        
-    Returns:
-        Result from unified_insert_journal_entry function
-    """
-    return unified_insert_journal_entry(data)
-
-
-# Backward compatibility function that matches your original signature
-def unified_insert_journal_entry_legacy(data: Dict[str, Any], use_entry_table: bool = False) -> Dict[str, Any]:
-    """
-    Legacy function that matches the original signature for backward compatibility.
-    
-    Args:
-        data: Dictionary containing entry parameters
-        use_entry_table: Whether to use entry table (ignored, maintained for compatibility)
-        
-    Returns:
-        Result from the PostgreSQL function
-    """
-    return unified_insert_journal_entry(data)
-
-
-def insert_bill_entry(
-    gstin: str,
-    bill_no: str,
-    wt: Union[float, Decimal],
-    rate: Union[float, Decimal],
-    purity: Optional[str] = None,
-    dated: Optional[date] = None,
-    bank: bool = False,
-    remark_text: Optional[str] = None,
-    cgst: Optional[Union[float, Decimal]] = None,
-    sgst: Optional[Union[float, Decimal]] = None,
-    igst: Optional[Union[float, Decimal]] = None
-) -> Dict[str, Any]:
-    """
-    Specialized function for inserting bill entries.
-    """
-    return unified_insert_journal_entry(
-        entry_type='bill',
-        gstin=gstin,
-        bill_no=bill_no,
-        wt=wt,
-        rate=rate,
-        purity=purity,
-        dated=dated,
-        bank=bank,
-        remark_text=remark_text,
-        cgst=cgst,
-        sgst=sgst,
-        igst=igst
-    )
-
-
-def insert_cash_entry(
-    gstin: str,
-    cash_amount: Union[float, Decimal],
-    dated: Optional[date] = None,
-    bank: bool = False,
-    remark_text: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Specialized function for inserting cash entries.
-    """
-    return unified_insert_journal_entry(
-        entry_type='cash',
-        gstin=gstin,
-        cash_amount=cash_amount,
-        dated=dated,
-        bank=bank,
-        remark_text=remark_text
-    )
-
-
-def insert_stock_entry(
-    gstin: str,
-    weight: Union[float, Decimal],
-    purity: Optional[str] = None,
-    dated: Optional[date] = None,
-    bank: bool = False,
-    remark_text: Optional[str] = None,
-    entry_type: str = 'stock'  # can be 'stock' or 'gold'
-) -> Dict[str, Any]:
-    """
-    Specialized function for inserting stock/gold entries.
-    """
-    return unified_insert_journal_entry(
-        entry_type=entry_type,
-        gstin=gstin,
-        weight=weight,
-        purity=purity,
-        dated=dated,
-        bank=bank,
-        remark_text=remark_text
-    )
-
-
-def insert_remark_entry(
-    gstin: str,
-    remark_text: str,
-    dated: Optional[date] = None,
-    bank: bool = False
-) -> Dict[str, Any]:
-    """
-    Specialized function for inserting remarks entries.
-    """
-    return unified_insert_journal_entry(
-        entry_type='remarks',
-        gstin=gstin,
-        remark_text=remark_text,
-        dated=dated,
-        bank=bank
-    )
-
-
-def diagnose_cash_table() -> Dict[str, Any]:
-    """
-    Call the diagnostic function to check cash table status.
-    """
-    conn = get_db_connection()
-    if not conn:
-        return {"status": "error", "message": "Failed to get database connection"}
-    
-    try:
-        query = text("SELECT * FROM public.diagnose_cash_table()")
-        result = conn.execute(query)
-        
-        diagnostics = []
-        for row in result:
-            diagnostics.append({
-                "check_type": row[0],
-                "result": row[1],
-                "details": row[2]
-            })
-        
-        return {"status": "success", "diagnostics": diagnostics}
-        
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-        
-    finally:
-        conn.close()
-
-
-def test_cash_insert() -> Dict[str, Any]:
-    """
-    Call the test function to verify cash table functionality.
-    """
-    conn = get_db_connection()
-    if not conn:
-        return {"status": "error", "message": "Failed to get database connection"}
-    
-    try:
-        query = text("SELECT public.test_cash_insert()")
-        result = conn.execute(query)
-        
-        test_result = result.fetchone()[0]
-        
-        return {
-            "status": "success" if "SUCCESS" in test_result else "error",
-            "message": test_result
-        }
-        
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-        
-    finally:
-        conn.close()
-
-
-def batch_insert_journal_entries(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Insert multiple journal entries in sequence.
-    
-    Args:
-        entries: List of dictionaries, each containing parameters for an entry
-        
-    Returns:
-        Dict with overall status and individual results
-    """
-    results = []
-    successful = 0
-    failed = 0
-    
-    for i, entry_data in enumerate(entries):
-        try:
-            result = unified_insert_journal_entry(entry_data)
-            results.append({
-                "entry_index": i,
-                "entry_type": entry_data.get('entry_type'),
-                "result": result
-            })
-            
-            if result.get('status') == 'success':
-                successful += 1
-            else:
-                failed += 1
-                
-        except Exception as e:
-            results.append({
-                "entry_index": i,
-                "entry_type": entry_data.get('entry_type'),
-                "result": {"status": "error", "message": str(e)}
-            })
-            failed += 1
-    
-    return {
-        "status": "completed",
-        "summary": {
-            "total": len(entries),
-            "successful": successful,
-            "failed": failed
-        },
-        "results": results
-    }
-
-
-# Example usage and testing functions
-def example_usage():
-    """
-    Example usage of the journal entry functions.
-    """
-    
-    # Example 1: Insert a bill entry
-    bill_result = insert_bill_entry(
-        gstin="12ABCDE1234F1Z5",
-        bill_no="BILL001",
-        wt=10.5,
-        rate=5000.00,
-        purity="22K",
-        bank=True,
-        remark_text="Gold purchase from supplier A"
-    )
-    print("Bill Entry Result:", bill_result)
-    
-    # Example 2: Insert a cash entry
-    cash_result = insert_cash_entry(
-        gstin="12ABCDE1234F1Z5",
-        cash_amount=25000.00,
-        bank=False,
-        remark_text="Cash deposit"
-    )
-    print("Cash Entry Result:", cash_result)
-    
-    # Example 3: Insert a stock entry
-    stock_result = insert_stock_entry(
-        gstin="12ABCDE1234F1Z5",
-        weight=15.75,
-        purity="24K",
-        entry_type="gold",
-        remark_text="Gold stock addition"
-    )
-    print("Stock Entry Result:", stock_result)
-    
-    # Example 4: Using dictionary approach
-    entry_data = {
-        'entry_type': 'cash',
-        'gstin': '12ABCDE1234F1Z5',
-        'cash_amount': 10000.00,
-        'bank': True,
-        'remark_text': 'Bank deposit'
-    }
-    dict_result = unified_insert_journal_entry(entry_data)
-    print("Dictionary Entry Result:", dict_result)
-    
-    # Example 5: Batch insert
-    batch_entries = [
-        {
-            'entry_type': 'cash',
-            'gstin': '12ABCDE1234F1Z5',
-            'cash_amount': 5000.00,
-            'remark_text': 'Cash entry 1'
-        },
-        {
-            'entry_type': 'cash',
-            'gstin': '12ABCDE1234F1Z5',
-            'cash_amount': 7500.00,
-            'remark_text': 'Cash entry 2'
-        }
-    ]
-    batch_result = batch_insert_journal_entries(batch_entries)
-    print("Batch Insert Result:", batch_result)
-
-def get_table_schema(table_name: str) -> Dict[str, Any]:
-    """
-    Fetch the schema details of a given table from the PostgreSQL database.
-
-    Args:
-        table_name: Name of the table whose schema details are to be fetched.
-
-    Returns:
-        A dictionary containing the schema details or an error message.
-    """
-    conn = get_db_connection()
-    if not conn:
-        return {"status": "error", "message": "Failed to get database connection"}
-    
-    try:
-        query = text("""
-            SELECT column_name, data_type, is_nullable, character_maximum_length
-            FROM information_schema.columns
-            WHERE table_name = :table_name
-        """)
-        result = conn.execute(query, {"table_name": table_name}).mappings()  # Use .mappings() for dictionary-like rows
-        
-        schema_details = []
-        for row in result:
-            schema_details.append({
-                "column_name": row["column_name"],
-                "data_type": row["data_type"],
-                "is_nullable": row["is_nullable"],
-                "character_maximum_length": row["character_maximum_length"]
-            })
-        
-        return {"status": "success", "schema": schema_details}
-        
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-        
-    finally:
-        conn.close()
-if __name__ == "__main__":
-    global get_db_connection,db,engine,Session
-    
-    from flask_sqlalchemy import SQLAlchemy
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import scoped_session, sessionmaker
-    from sqlalchemy.sql import text
-
-    db = SQLAlchemy()
-    engine = None
-    Session = None
-    config = dict()
-    config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:mysecret@db:5432/gold_db"
-    def init_db(app):
-        global engine, Session
-        db.init_app(app)
-        engine = create_engine(config["SQLALCHEMY_DATABASE_URI"])
-        Session = scoped_session(sessionmaker(bind=engine))
-
-    def get_db_connectionx():
-        return engine.connect()
-    get_db_connection = get_db_connectionx
-    # Initialize the database connection
-    # Run diagnostics
-    print("=== Diagnostics ===")
-    diag_result = diagnose_cash_table()
-    print("Cash Table Diagnostics:", diag_result)
-    
-    test_result = test_cash_insert()
-    print("Cash Insert Test:", test_result)
-    
-    # Run examples (uncomment to test)
-    # print("\n=== Examples ===")
-    # example_usage()

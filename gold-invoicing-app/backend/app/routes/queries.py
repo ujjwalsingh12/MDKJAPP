@@ -3,7 +3,6 @@
 from flask import Blueprint, request, jsonify
 from app.services.queries import (
     get_table_data,
-    get_data_by_gstin,
     insert_record,
     update_record_by_id,
     delete_record_by_id,
