@@ -9,7 +9,9 @@ export const insertUnifiedEntry = (data) =>
 
 // Generic fetch for any table
 export const fetchAll = (table, params = {}) =>
+    // console.log(`${API_BASE}/${table}/all`, JSON.stringify(params));
     axios.get(`${API_BASE}/${table}/all`, { params });
+
 
 // Fetch by GSTIN
 export const fetchByGSTIN = (table, gstin) =>
@@ -19,6 +21,11 @@ export const fetchByGSTIN = (table, gstin) =>
 // Add a new record to a specified table
 export const addRecord = (table, data) =>
     axios.post(`${API_BASE}/${table}/add`, data);
+
+
+// Fetch schema of a specified table
+export const fetchTableSchema = (table) =>
+    axios.get(`${API_BASE}/${table}/schema`);
 
 
 

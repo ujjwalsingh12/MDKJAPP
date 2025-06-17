@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { insertUnifiedEntry } from '../api/index';
 import { fetchAll } from '../api/index'; // assumes you have fetchAll API to get customers
 import 'bootstrap/dist/css/bootstrap.min.css';
+import ViewTables from '../components/ViewTables'; // assumes you have a ViewTables component to display recent entries
 
 const EntryDashboard = () => {
     const [entryType, setEntryType] = useState('');
@@ -69,18 +70,55 @@ const EntryDashboard = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (!selectedCustomer?.gstin) {
             alert('Please select a valid customer with GSTIN.');
             return;
         }
 
+        // Prepare the payload
         const payload = {
             ...form,
             entry_type: entryType,
             gstin: selectedCustomer.gstin,
         };
 
+        // Show confirmation alert
+        const confirmationMessage = `
+    Please confirm the following details before submission:
+
+    - Date: ${form.dated} (${new Date(form.dated).toLocaleDateString('en-US', { weekday: 'long' })})
+    - ${selectedCustomer?.name || 'N/A'}
+    - ${entryType || 'N/A'} Entry
+    - ${form.bank ? 'BANK' : 'CASH'} Transaction
+    ${entryType === 'bill' ? `
+    Bill Details:
+    - Bill No: ${form.bill_no || 'N/A'}
+    - Purity: ${form.purity || 'N/A'}
+    - Weight: ${form.wt || 'N/A'}
+    - Rate: ${form.rate || 'N/A'}
+    `.trim() : ''}
+    ${entryType === 'cash' ? `
+    Cash Details:
+    - Cash Amount: ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.cash_amount || 0)}
+    `.trim() : ''}
+    ${(entryType === 'stock' || entryType === 'gold') ? `
+    Stock/Gold Details:
+    - Purity: ${form.purity || 'N/A'}
+    - Weight: ${form.weight || 'N/A'}
+    `.trim() : ''}
+    ${entryType === 'remarks' || form.remark_text ? `
+    Remarks:
+    - ${form.remark_text || 'N/A'}
+    `.trim() : ''}
+    `.trim();
+        if (!window.confirm(confirmationMessage)) {
+            // If the user cancels, stop the submission
+            return;
+        }
+
         try {
+            // Submit the entry
             await insertUnifiedEntry(payload);
             alert('Entry added successfully!');
             setForm({ ...form, bill_no: '', wt: '', rate: '', cash_amount: '', purity: '', weight: '', remark_text: '' });
@@ -335,7 +373,18 @@ const EntryDashboard = () => {
                 )}
 
             </form>
-        </div>
+            <h3 className="mt-5">Recent Journal Entries</h3>
+            <ViewTables
+                tableName="journal"
+                initialParams={{
+                    page_size: 5,
+
+                    sort_order: "desc"
+                }}
+            />
+
+        </div >
+
     );
 };
 

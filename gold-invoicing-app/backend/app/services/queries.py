@@ -1137,7 +1137,44 @@ def example_usage():
     batch_result = batch_insert_journal_entries(batch_entries)
     print("Batch Insert Result:", batch_result)
 
+def get_table_schema(table_name: str) -> Dict[str, Any]:
+    """
+    Fetch the schema details of a given table from the PostgreSQL database.
 
+    Args:
+        table_name: Name of the table whose schema details are to be fetched.
+
+    Returns:
+        A dictionary containing the schema details or an error message.
+    """
+    conn = get_db_connection()
+    if not conn:
+        return {"status": "error", "message": "Failed to get database connection"}
+    
+    try:
+        query = text("""
+            SELECT column_name, data_type, is_nullable, character_maximum_length
+            FROM information_schema.columns
+            WHERE table_name = :table_name
+        """)
+        result = conn.execute(query, {"table_name": table_name}).mappings()  # Use .mappings() for dictionary-like rows
+        
+        schema_details = []
+        for row in result:
+            schema_details.append({
+                "column_name": row["column_name"],
+                "data_type": row["data_type"],
+                "is_nullable": row["is_nullable"],
+                "character_maximum_length": row["character_maximum_length"]
+            })
+        
+        return {"status": "success", "schema": schema_details}
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+        
+    finally:
+        conn.close()
 if __name__ == "__main__":
     global get_db_connection,db,engine,Session
     
