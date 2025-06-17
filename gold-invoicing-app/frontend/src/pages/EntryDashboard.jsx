@@ -9,16 +9,17 @@ const EntryDashboard = () => {
     const [form, setForm] = useState({
         dated: new Date().toISOString().slice(0, 10),
         bank: false,
-        remark_text: '',
-        bill_no: '',
-        purity: '',
-        wt: '',
-        rate: '',
-        cgst: '',
-        sgst: '',
-        igst: '',
-        cash_amount: '',
-        weight: '',
+        remark_text: null,
+        bill_no: null,
+        purity: null,
+        wt: null,
+        rate: null,
+        cgst: null,
+        sgst: null,
+        igst: null,
+        cash_amount: null,
+        weight: null,
+        is_debit: false,
     });
 
     const [customers, setCustomers] = useState([]);
@@ -119,9 +120,30 @@ const EntryDashboard = () => {
 
         try {
             // Submit the entry
-            await insertUnifiedEntry(payload);
+            try {
+                console.log('Submitting entry with payload:', { payload });
+                await insertUnifiedEntry(payload);
+                // console.log('Entry inserted successfully:', response);
+            } catch (error) {
+                console.error('Error inserting entry:', error);
+                // q// throw error; // Re-throw the error to stop further execution
+            }
             alert('Entry added successfully!');
-            setForm({ ...form, bill_no: '', wt: '', rate: '', cash_amount: '', purity: '', weight: '', remark_text: '' });
+            setForm({
+                dated: new Date().toISOString().slice(0, 10),
+                bank: false,
+                remark_text: null,
+                bill_no: null,
+                purity: null,
+                wt: null,
+                rate: null,
+                cgst: null,
+                sgst: null,
+                igst: null,
+                cash_amount: null,
+                weight: null,
+                is_debit: false
+            });
         } catch (error) {
             console.error(error);
             alert(error?.response?.data?.error || 'Failed to insert entry.');
@@ -144,10 +166,10 @@ const EntryDashboard = () => {
                         />
                         <button
                             type="button"
-                            className={`btn mb-2 ${form.wt < 0 ? 'btn-danger' : 'btn-success'}`}
-                            onClick={() => handleChange('wt', form.wt > 0 ? -Math.abs(form.wt) : Math.abs(form.wt))}
+                            className={`btn mb-2 ${form.is_debit ? 'btn-danger' : 'btn-success'}`}
+                            onClick={() => handleChange('is_debit', !form.is_debit)}
                         >
-                            {form.wt < 0 ? 'Set to Credit' : 'Set to Debit'}
+                            {form.is_debit ? 'Debit' : 'Credit'}
                         </button>
                         <input className="form-control mb-2" placeholder="Rate" type="number" value={form.rate} onChange={(e) => handleChange('rate', e.target.value)} />
                         <input className="form-control mb-2" placeholder="CGST" type="number" value={form.cgst} onChange={(e) => handleChange('cgst', e.target.value)} />
@@ -181,10 +203,12 @@ const EntryDashboard = () => {
                         </div>
                         <button
                             type="button"
-                            className={`btn mb-2 ${form.cash_amount < 0 ? 'btn-danger' : 'btn-success'}`}
-                            onClick={() => handleChange('cash_amount', form.cash_amount > 0 ? -Math.abs(form.cash_amount) : Math.abs(form.cash_amount))}
+                            className={`btn mb-2 ${form.is_debit ? 'btn-danger' : 'btn-success'}`}
+                            onClick={() => {
+                                handleChange('is_debit', !form.is_debit);
+                            }}
                         >
-                            {form.cash_amount < 0 ? 'Set to Credit' : 'Set to Debit'}
+                            {form.is_debit ? 'Debit' : 'Credit'}
                         </button>
                         <div>   </div>
                     </>
@@ -225,10 +249,10 @@ const EntryDashboard = () => {
                         />
                         <button
                             type="button"
-                            className={`btn mb-2 ${form.weight < 0 ? 'btn-danger' : 'btn-success'}`}
-                            onClick={() => handleChange('weight', form.weight > 0 ? -Math.abs(form.weight) : Math.abs(form.weight))}
+                            className={`btn mb-2 ${form.is_debit ? 'btn-danger' : 'btn-success'}`}
+                            onClick={() => handleChange('is_debit', !form.is_debit)}
                         >
-                            {form.weight < 0 ? 'Set to Credit' : 'Set to Debit'}
+                            {form.is_debit ? 'Debit' : 'Credit'}
                         </button>
                         <div className="mb-2">
                             <h4>
@@ -246,6 +270,8 @@ const EntryDashboard = () => {
                 return null;
         }
     };
+
+    const [showTable, setShowTable] = useState(false);
 
     return (
         <div className="container mt-4 p-4" style={{ padding: '20px', margin: '20px' }}>
@@ -293,14 +319,15 @@ const EntryDashboard = () => {
                             ))}
                         </ul>
                     )}
+                    {selectedCustomer && (
+                        <>
+                            GSTIN: <input className="form-control mb-2" disabled value={selectedCustomer.gstin} placeholder="GSTIN" />
+
+                            ADDRESS : <input className="form-control mb-2" disabled value={selectedCustomer.address} placeholder="Address" />
+                        </>
+                    )}
                 </div>
 
-                {selectedCustomer && (
-                    <>
-                        <input className="form-control mb-2" disabled value={selectedCustomer.phone} placeholder="Phone" />
-                        <input className="form-control mb-2" disabled value={selectedCustomer.address} placeholder="Address" />
-                    </>
-                )}
 
                 <input type="date" className="form-control mb-2" value={form.dated} onChange={(e) => handleChange('dated', e.target.value)} />
                 <div className="btn-group mb-2">
@@ -373,18 +400,27 @@ const EntryDashboard = () => {
                 )}
 
             </form>
-            <h3 className="mt-5">Recent Journal Entries</h3>
-            <ViewTables
-                tableName="journal"
-                initialParams={{
-                    page_size: 5,
-
-                    sort_order: "desc"
-                }}
-            />
-
+            <button
+                type="button"
+                className="btn btn-secondary mt-3"
+                onClick={() => setShowTable(!showTable)}
+            >
+                {showTable ? 'Hide Recent Entries' : 'Show Recent Entries'}
+            </button>
+            {showTable && (
+                <>
+                    <h3 className="mt-5">Recent Journal Entries</h3>
+                    <ViewTables
+                        tableName={entryType || 'journal'}
+                        initialParams={{
+                            page_size: 5,
+                            sort_by: 'id',
+                            sort_order: "desc"
+                        }}
+                    />
+                </>
+            )}
         </div >
-
     );
 };
 
