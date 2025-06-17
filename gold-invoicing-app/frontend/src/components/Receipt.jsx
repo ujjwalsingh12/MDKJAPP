@@ -929,7 +929,8 @@ const Receipt = () => {
                   sgst: ((item.amount * sgstRate) / 100).toFixed(2),
                   igst: ((item.amount * igstRate) / 100).toFixed(2),
                   weight: item.weight,
-                  cash_amount: item.amount.toFixed(2)
+                  cash_amount: item.amount.toFixed(2),
+                  is_debit: true
                 }));
 
                 try {

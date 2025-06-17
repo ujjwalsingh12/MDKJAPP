@@ -463,10 +463,10 @@ def delete_record_by_id(table_name, record_id):
         
 #     finally:
 #         conn.close()
-
 def unified_insert_journal_entry(
     entry_type_or_data,  # Can be string (entry_type) or dict (data)
     gstin: Optional[str] = None,
+    is_debit: Optional[bool] = None,  # NEW REQUIRED PARAMETER
     dated: Optional[date] = None,
     bank: bool = False,
     remark_text: Optional[str] = None,
@@ -487,6 +487,7 @@ def unified_insert_journal_entry(
     Args:
         entry_type_or_data: Either a string (entry_type) or dict containing all data
         gstin: GST identification number (if not using dict)
+        is_debit: Whether the entry is a debit transaction (required)
         dated: Date of entry (defaults to current date)
         bank: Whether this is a bank transaction
         remark_text: Optional remark text
@@ -519,6 +520,7 @@ def unified_insert_journal_entry(
             data = entry_type_or_data
             entry_type = data.get('entry_type')
             gstin = data.get('gstin')
+            is_debit = data.get('is_debit')  # NEW REQUIRED PARAMETER
             dated = data.get('dated')
             bank = data.get('is_bank', data.get('bank', False))
             remark_text = data.get('remark_text')
@@ -549,6 +551,7 @@ def unified_insert_journal_entry(
             SELECT * FROM public.unified_insert_journal_entry(
                 p_entry_type := :entry_type,
                 p_gstin := :gstin,
+                p_is_debit := :is_debit,  -- NEW REQUIRED PARAMETER
                 p_dated := :dated,
                 p_bank := :bank,
                 p_remark_text := :remark_text,
@@ -582,6 +585,7 @@ def unified_insert_journal_entry(
             SELECT * FROM public.unified_insert_journal_entry(
                 p_entry_type := {safe_format(entry_type)},
                 p_gstin := {safe_format(gstin)},
+                p_is_debit := {safe_format(is_debit)},  -- NEW REQUIRED PARAMETER
                 p_dated := {safe_format(dated)},
                 p_bank := {safe_format(bank)},
                 p_remark_text := {safe_format(remark_text)},
@@ -609,6 +613,7 @@ def unified_insert_journal_entry(
         result = conn.execute(query, {
             'entry_type': entry_type,
             'gstin': gstin,
+            'is_debit': is_debit,  # NEW REQUIRED PARAMETER
             'dated': dated,
             'bank': bank,
             'remark_text': remark_text,
@@ -632,22 +637,14 @@ def unified_insert_journal_entry(
             trans.commit()
             logging.info("Transaction committed successfully")
             
-            # Verify the insert (optional but good for debugging)
-            try:
-                verify_query = text("SELECT COUNT(*) FROM stock WHERE id = :entry_id")
-                verify_result = conn.execute(verify_query, {'entry_id': row[2]})
-                count = verify_result.scalar()
-                logging.info(f"Verification: Found {count} records with entry_id {row[2]}")
-            except Exception as verify_error:
-                logging.warning(f"Verification query failed: {verify_error}")
-            
             return {
                 "status": "success",
                 "journal_ts": row[0],          # journal_ts
                 "entry_type": row[1],          # returned_entry_type
                 "entry_id": row[2],            # returned_entry_id
                 "amount": row[3],              # returned_amount
-                "remark_id": row[4]            # returned_remark_id
+                "remark_id": row[4],           # returned_remark_id
+                "is_debit": row[5]             # returned_is_debit
             }
         else:
             # Rollback if no result

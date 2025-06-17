@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { insertUnifiedEntry } from '../api';
+import { insertUnifiedEntry } from '../api/index';
 import { fetchAll } from '../api/index'; // assumes you have fetchAll API to get customers
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -49,11 +49,23 @@ const EntryDashboard = () => {
         setSelectedCustomer(customer);
         setCustomerSearchTerm(customer.name);
         setShowCustomerDropdown(false);
+        sessionStorage.setItem('lastSelectedCustomer', JSON.stringify(customer));
     };
+
+    useEffect(() => {
+        const lastCustomer = sessionStorage.getItem('lastSelectedCustomer');
+        if (lastCustomer) {
+            const parsedCustomer = JSON.parse(lastCustomer);
+            setSelectedCustomer(parsedCustomer);
+            setCustomerSearchTerm(parsedCustomer.name);
+        }
+    }, []);
 
     const handleChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
     };
+
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -92,6 +104,13 @@ const EntryDashboard = () => {
                             value={parseFloat(form.wt).toFixed(3) || ''}
                             onChange={(e) => handleChange('wt', parseFloat(e.target.value) || 0)}
                         />
+                        <button
+                            type="button"
+                            className={`btn mb-2 ${form.wt < 0 ? 'btn-danger' : 'btn-success'}`}
+                            onClick={() => handleChange('wt', form.wt > 0 ? -Math.abs(form.wt) : Math.abs(form.wt))}
+                        >
+                            {form.wt < 0 ? 'Set to Credit' : 'Set to Debit'}
+                        </button>
                         <input className="form-control mb-2" placeholder="Rate" type="number" value={form.rate} onChange={(e) => handleChange('rate', e.target.value)} />
                         <input className="form-control mb-2" placeholder="CGST" type="number" value={form.cgst} onChange={(e) => handleChange('cgst', e.target.value)} />
                         <input className="form-control mb-2" placeholder="SGST" type="number" value={form.sgst} onChange={(e) => handleChange('sgst', e.target.value)} />
@@ -101,6 +120,10 @@ const EntryDashboard = () => {
             case 'cash':
                 return (
                     <>
+                        <div className="mb-2">
+                            <strong>Formatted Amount: </strong>
+                            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.cash_amount || 0)}
+                        </div>
                         <input
                             className="form-control mb-2"
                             placeholder="Cash Amount"
@@ -109,9 +132,14 @@ const EntryDashboard = () => {
                             onChange={(e) => handleChange('cash_amount', parseFloat(e.target.value) || 0)}
                             style={{ color: form.cash_amount < 0 ? 'red' : 'green' }}
                         />
-                        <div className="mb-2">
-                            <strong>Formatted Amount: </strong>
-                            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.cash_amount || 0)}
+                        <div className="btn-group mb-2">
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                onClick={() => handleChange('cash_amount', (form.cash_amount || 0) * 100000)}
+                            >
+                                Convert to Lakhs
+                            </button>
                         </div>
                         <button
                             type="button"
@@ -120,6 +148,7 @@ const EntryDashboard = () => {
                         >
                             {form.cash_amount < 0 ? 'Set to Credit' : 'Set to Debit'}
                         </button>
+                        <div>   </div>
                     </>
                 );
             case 'stock':
@@ -181,7 +210,7 @@ const EntryDashboard = () => {
     };
 
     return (
-        <div className="container mt-4">
+        <div className="container mt-4 p-4" style={{ padding: '20px', margin: '20px' }}>
             <h2 className="mb-4">Unified Entry Dashboard</h2>
 
             <form onSubmit={handleSubmit}>
@@ -236,14 +265,69 @@ const EntryDashboard = () => {
                 )}
 
                 <input type="date" className="form-control mb-2" value={form.dated} onChange={(e) => handleChange('dated', e.target.value)} />
-
-                <div className="form-check mb-2">
-                    <label className="form-check-label">Bank Transaction</label>
-                    <input className="form-check-input" type="checkbox" checked={form.bank} onChange={(e) => handleChange('bank', e.target.checked)} />
+                <div className="btn-group mb-2">
+                    <button
+                        type="button"
+                        className={`btn ${form.dated === new Date().toISOString().slice(0, 10) ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => handleChange('dated', new Date().toISOString().slice(0, 10))}
+                    >
+                        Today
+                    </button>
+                    <button
+                        type="button"
+                        className={`btn ${form.dated === new Date(Date.now() - 86400000).toISOString().slice(0, 10) ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => handleChange('dated', new Date(Date.now() - 86400000).toISOString().slice(0, 10))}
+                    >
+                        Yesterday
+                    </button>
+                    <button
+                        type="button"
+                        className={`btn ${form.dated === new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10) ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => handleChange('dated', new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10))}
+                    >
+                        Day Before Yesterday
+                    </button>
                 </div>
 
+                <div className="mb-2">
+                    <button
+                        type="button"
+                        className={`btn ${form.bank ? 'btn-success' : 'btn-danger'}`}
+                        onClick={() => handleChange('bank', !form.bank)}
+                        style={{ fontWeight: 'bold' }}
+                    >
+                        {form.bank ? 'Bank Transaction' : 'Cash Transaction'}
+                    </button>
+                </div>
 
                 {renderFields()}
+                <div className="alert alert-info mt-3">
+                    <h5>Entry Summary</h5>
+                    <p><strong>Date:</strong> {form.dated} ({new Date(form.dated).toLocaleDateString('en-US', { weekday: 'long' })})</p>
+                    <p><strong>Customer Name:</strong> {selectedCustomer?.name || 'N/A'}</p>
+                    <p><strong>Entry Type:</strong> {entryType || 'N/A'}</p>
+                    {entryType === 'bill' && (
+                        <>
+                            <p><strong>Bill No:</strong> {form.bill_no || 'N/A'}</p>
+                            <p><strong>Purity:</strong> {form.purity || 'N/A'}</p>
+                            <p><strong>Weight:</strong> {form.wt || 'N/A'}</p>
+                            <p><strong>Rate:</strong> {form.rate || 'N/A'}</p>
+                        </>
+                    )}
+                    {entryType === 'cash' && (
+                        <p><strong>Cash Amount:</strong> {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.cash_amount || 0)}</p>
+                    )}
+                    {entryType === 'stock' || entryType === 'gold' ? (
+                        <>
+                            <p><strong>Purity:</strong> {form.purity || 'N/A'}</p>
+                            <p><strong>Weight:</strong> {form.weight || 'N/A'}</p>
+                        </>
+                    ) : null}
+                    {entryType === 'remarks' && (
+                        <p><strong>Remark:</strong> {form.remark_text || 'N/A'}</p>
+                    )}
+                    <p><strong>Bank Transaction:</strong> {form.bank ? 'Yes' : 'No'}</p>
+                </div>
                 <button type="submit" className="btn btn-primary mt-3">Submit Entry</button>
                 <p></p>
                 {entryType !== 'remarks' && (

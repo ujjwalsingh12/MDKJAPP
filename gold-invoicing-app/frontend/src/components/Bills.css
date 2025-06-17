@@ -1,102 +1,164 @@
 /* Container styling */
 .container {
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Heading styling */
+h1 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+  /* Center align for better mobile appearance */
+}
+
+/* Table styling */
+.table {
+  margin-bottom: 20px;
+  width: 100%;
+  /* Ensure table fits within the screen */
+  overflow-x: auto;
+  /* Add horizontal scrolling for smaller screens */
+  display: block;
+  /* Make table scrollable */
+}
+
+.table-bordered {
+  border: 1px solid #ddd;
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  font-size: 14px;
+  /* Reduce font size for smaller screens */
+}
+
+.table-bordered th {
+  background-color: #343a40;
+  color: #fff;
+}
+
+.table-bordered td {
+  background-color: #fff;
+}
+
+.table-active {
+  background-color: #e9ecef;
+}
+
+.table .form-control {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* Button styling */
+.btn {
+  margin-right: 5px;
+  font-size: 14px;
+  /* Adjust button font size for smaller screens */
+  padding: 8px 12px;
+  /* Adjust padding for better fit */
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0069d9;
+  border-color: #005cbf;
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+}
+
+/* Filter inputs styling */
+.form-control {
+  display: inline-block;
+  width: auto;
+}
+
+.d-flex {
+  display: flex;
+  flex-wrap: wrap;
+  /* Allow wrapping for smaller screens */
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+    /* Reduce padding for smaller screens */
   }
-  
-  /* Heading styling */
+
   h1 {
-    font-size: 24px;
-    color: #333;
-    margin-bottom: 20px;
+    font-size: 20px;
+    /* Reduce heading size */
   }
-  
-  /* Table styling */
-  .table {
-    margin-bottom: 20px;
-  }
-  
-  .table-bordered {
-    border: 1px solid #ddd;
-  }
-  
-  .table-bordered th, .table-bordered td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-  
-  .table-bordered th {
-    background-color: #343a40;
-    color: #fff;
-  }
-  
+
+  .table-bordered th,
   .table-bordered td {
-    background-color: #fff;
+    font-size: 12px;
+    /* Further reduce font size for smaller screens */
+    padding: 6px;
+    /* Adjust padding */
   }
-  
-  .table-active {
-    background-color: #e9ecef;
-  }
-  
-  .table .form-control {
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  /* Button styling */
+
   .btn {
-    margin-right: 5px;
+    font-size: 12px;
+    /* Smaller buttons */
+    padding: 6px 10px;
+    /* Adjust padding */
   }
-  
-  .btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-  }
-  
-  .btn-success:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-  }
-  
-  .btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-  }
-  
-  .btn-primary:hover {
-    background-color: #0069d9;
-    border-color: #005cbf;
-  }
-  
-  .btn-info {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
-  }
-  
-  .btn-info:hover {
-    background-color: #138496;
-    border-color: #117a8b;
-  }
-  
-  /* Filter inputs styling */
-  .form-control {
-    display: inline-block;
-    width: auto;
-  }
-  
+
   .d-flex {
-    display: flex;
+    flex-direction: column;
+    /* Stack elements vertically */
   }
-  
-  .mr-2 {
-    margin-right: 0.5rem;
-  }
-  
+
+  .mr-2,
   .ml-2 {
-    margin-left: 0.5rem;
+    margin: 0;
+    /* Remove margins for better spacing */
   }
-  
+
+  .form-control {
+    width: 100%;
+    /* Make inputs full width */
+    margin-bottom: 10px;
+    /* Add spacing between inputs */
+  }
+}
