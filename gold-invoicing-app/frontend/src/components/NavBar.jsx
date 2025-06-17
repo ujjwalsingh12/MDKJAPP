@@ -11,6 +11,7 @@ export default function NavBar() {
             {/* <Link to="/excel">Excel Interface</Link> */}
             {/* <Link to="/create-bill">Create Bill</Link> */}
             <Link to="/receipt-page">Receipt Page</Link>
+            <Link to="/entry-dashboard">Entry Dashboard</Link>
         </nav>
     );
 }

@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard';
 import AddEntry from './pages/AddEntry';
 import ViewRecords from './pages/ViewRecords';
 import NavBar from './components/NavBar';
+import EntryDashboard from './pages/EntryDashboard';
 
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
@@ -38,6 +39,7 @@ const AppRoutes = () => (
             {/* <Route path="/excel" element={<ExcelInterface />} /> */}
             {/* <Route path="/create-bill" element={<CreateBill />} /> */}
             <Route path="/receipt-page" element={<ReceiptPage />} />
+            <Route path="/entry-dashboard" element={<EntryDashboard />} />
         </Routes>
     </Router>
 );
