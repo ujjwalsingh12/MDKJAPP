@@ -49,3 +49,10 @@ export const fetchAllSanitized = async (table, params = {}) => {
     const response = await fetchAll(table, params);
     return sanitizeResponse(response.data);
 };
+
+// Update a record in a specified table
+export const updateRecord = (table, data) =>
+    axios.put(`${API_BASE}/${table}/update`, data);
+// Delete a record from a specified table
+export const deleteRecord = (table, id) =>
+    axios.delete(`${API_BASE}/${table}/delete/${id}`);  
