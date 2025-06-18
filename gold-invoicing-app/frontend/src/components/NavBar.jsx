@@ -59,7 +59,7 @@ export default function NavBar() {
                     className="btn btn-outline-secondary ms-auto"
                     onClick={toggleDarkMode}
                 >
-                    {darkMode ? 'Light Mode' : 'Dark Mode'}
+                    {darkMode ? '🌞' : '🌙'}
                 </button>
                 <button
                     className="navbar-toggler"
@@ -78,7 +78,6 @@ export default function NavBar() {
                             <NavItem key={index} to={link.to} label={link.label} />
                         ))}
                     </ul>
-
                 </div>
             </div>
         </nav>
