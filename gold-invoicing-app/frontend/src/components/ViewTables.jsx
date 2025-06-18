@@ -225,43 +225,26 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
             onMouseEnter={() => handleRowHover(rowIndex)}
         >
             {
-                Object.values(row).map((value, i) => (
-                    <td key={i}>
-                        {(row.isEditing
-                            && tableLayout.length > 0
-                            && tableLayout.length > i
-                        ) ?
-
-                            <div>
-                                {tableLayout.length > 0 ?
-                                    <input
-                                        type={tableLayout[i] ? tableLayout[i]['type'] === 'number' ? 'number' : 'text' : 'text'}
-                                        className="form-control"
-                                        value={value === null || (isNaN(value) && value.length == 0) ? "N/A" : value} //{/* Handle null or NaN */}
-                                        onChange={(e) => handleCellChange(rowIndex, i, e.target.value)}
-                                    />
-                                    :
-                                    "hi"
-                                }
-                            </div>
-
-
-                            :
-                            <div>
-                                {value === null || (isNaN(value) && value.length == 0) ? "N/A" : value}
-                                {/* {value === null || value === undefined || (typeof value === "string" && value.length === 0)
-                                ? "N/A" // Handle null, undefined, or empty string
-                                : typeof value === "object"
-                                    ? JSON.stringify(value) // Convert objects to a string
-                                    : value // Render strings or numbers directly
-                            } */}
-                            </div>
-
-                            // Display value or "N/A" if null or NaN
-                            // row[column.key] === null || (isNaN(row[column.key]) && row[column.key].length === 0) ? "N/A" : row[column.key]
-                        }
+                tableLayout.map((column, i) => (
+                    <td key={column.key}>
+                        {row.isEditing && column.editable ? (
+                            <input
+                                type={column.type === 'number' ? 'number' : 'text'}
+                                className="form-control"
+                                value={row[column.key] || ""}
+                                onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
+                            />
+                        ) : (
+                            row[column.key] === null || row[column.key] === undefined || row[column.key] === ""
+                                ? "N/A" // Handle null or missing values
+                                : row[column.key]
+                        )}
                     </td>
-                ))}
+                ))
+
+                // Display value or "N/A" if null or NaN
+                // row[column.key] === null || (isNaN(row[column.key]) && row[column.key].length === 0) ? "N/A" : row[column.key]
+            }
             <td>
                 <button
                     className={`btn ${row.isEditing ? 'btn-success' : 'btn-primary'}`}
@@ -277,7 +260,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                     </button>
                 )}
             </td>
-        </tr>
+        </tr >
     );
 
 
