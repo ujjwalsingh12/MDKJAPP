@@ -1,0 +1,135 @@
+/* General Container Styles */
+.container {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    margin-bottom: 20px;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+thead {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    text-align: left;
+}
+
+thead th {
+    padding: 12px 16px;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s ease;
+}
+
+tbody tr:hover {
+    background-color: var(--hover-color);
+}
+
+tbody td {
+    padding: 12px 16px;
+    font-size: var(--font-size-small);
+    color: var(--text-color);
+}
+
+/* Buttons */
+button {
+    padding: 8px 16px;
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    color: #ffffff;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+button:hover {
+    background-color: #4338ca;
+    box-shadow: 0 6px 8px var(--shadow-color);
+}
+
+button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Pagination Controls */
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.pagination button {
+    padding: 8px 12px;
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    color: #ffffff;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pagination button:hover {
+    background-color: #4338ca;
+}
+
+.pagination span {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+/* Dark Mode Styles */
+body.dark .container {
+    background-color: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+    box-shadow: 0 4px 6px var(--dark-shadow-color);
+}
+
+body.dark table {
+    background-color: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+}
+
+body.dark thead {
+    background-color: #2a2a2a;
+    color: var(--dark-text-color);
+}
+
+body.dark tbody tr:hover {
+    background-color: var(--dark-hover-color);
+}
+
+body.dark tbody td {
+    color: var(--dark-text-color);
+}
+
+body.dark button {
+    background-color: #3b82f6;
+    box-shadow: 0 4px 6px var(--dark-shadow-color);
+}
+
+body.dark button:hover {
+    background-color: #2563eb;
+}

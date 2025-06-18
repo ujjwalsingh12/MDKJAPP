@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
+// import './NavBar.css'; // Import custom CSS for NavBar
 
 function NavItem({ to, label }) {
     return (
@@ -30,23 +31,7 @@ export default function NavBar() {
         { to: '/view/journal', label: 'View Journal' },
         { to: '/view/bill', label: 'View Bills' },
         { to: '/view/stock', label: 'View Stock' },
-        // { to: '/view/customer_details', label: 'View Customer Details' },
-
-
-        // { to: '/view/stock', label: 'View Stock' },
-        // { to: '/view/customer_details', label: 'View Customer Details' },
-        // { to: '/view/?table=journal', label: 'View Journal' },
-        // { to: '/view/?table=bill', label: 'View Bills' },
-        // { to: '/view/?table=stock', label: 'View Stock' },
-        // { to: '/view/?table=customer_details', label: 'View Customer Details' },
-        // { to: '/add', label: 'Add Entry' },
-        // { to: '/view/bill', label: 'View Bills' },
-
-        // { to: '/view/receipt', label: 'View Receipts' },
-        // { to: '/sales', label: 'Sales' },
-        // { to: '/stock', label: 'Stock' },
-        // { to: '/bills', label: 'Bills' },
-        { to: '/receipt', label: 'Receipt' },
+        { to: '/create-bill', label: 'Create Bill' },
         { to: '/UnifiedEntryForm', label: 'Unified Entry Form' },
         // { to: '/receipt-page', label: 'Receipt Page' },
         { to: '/accounts', label: 'Accounts' },
@@ -69,7 +54,13 @@ export default function NavBar() {
 
             }`}>
             <div className="container-fluid">
-                <span className="navbar-brand fw-bold fs-4">Gold Invoicing App</span>
+                <span className="navbar-brand fw-bold fs-4">MDKJ Invoicing App</span>
+                <button
+                    className="btn btn-outline-secondary ms-auto"
+                    onClick={toggleDarkMode}
+                >
+                    {darkMode ? 'Light Mode' : 'Dark Mode'}
+                </button>
                 <button
                     className="navbar-toggler"
                     type="button"
@@ -82,17 +73,12 @@ export default function NavBar() {
                     <span className="navbar-toggler-icon"></span>
                 </button>
                 <div className="collapse navbar-collapse" id="navbarNav">
-                    <ul className="navbar-nav fs-6">
+                    <ul className="navbar-nav">
                         {navLinks.map((link, index) => (
                             <NavItem key={index} to={link.to} label={link.label} />
                         ))}
                     </ul>
-                    <button
-                        className="btn btn-outline-secondary ms-auto"
-                        onClick={toggleDarkMode}
-                    >
-                        {darkMode ? 'Light Mode' : 'Dark Mode'}
-                    </button>
+
                 </div>
             </div>
         </nav>

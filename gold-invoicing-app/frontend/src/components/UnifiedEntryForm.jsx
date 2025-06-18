@@ -4,19 +4,19 @@ import { insertUnifiedEntry } from '../api';
 export default function UnifiedEntryForm() {
     const [entryType, setEntryType] = useState('bill');
     const [form, setForm] = useState({
-        entry_type: 'bill',
-        gstin: 'GSTIN001',
-        dated: '2025-06-15',
+        entry_type_or_data: 'bill',
+        gstin: '',
+        dated: '',
         bank: false,
-        bill_no: 'BILL123',
-        purity: '91.6',
-        wt: '100',
-        rate: '5800',
-        cgst: '2.5',
-        sgst: '2.5',
-        igst: '0',
-        weight: '100',
-        cash_amount: '580000'
+        bill_no: '',
+        purity: '',
+        wt: '',
+        rate: '',
+        cgst: '',
+        sgst: '',
+        igst: '',
+        weight: '',
+        cash_amount: ''
     });
 
     const handleChange = (e) => {
@@ -30,7 +30,7 @@ export default function UnifiedEntryForm() {
     const handleEntryTypeChange = (e) => {
         const newType = e.target.value;
         setEntryType(newType);
-        setForm((prev) => ({ ...prev, entry_type: newType }));
+        setForm((prev) => ({ ...prev, entry_type_or_data: newType }));
     };
 
     const handleSubmit = async (e) => {
@@ -51,7 +51,7 @@ export default function UnifiedEntryForm() {
             <form onSubmit={handleSubmit}>
                 <label>
                     Entry Type:
-                    <select name="entry_type" value={form.entry_type} onChange={handleEntryTypeChange}>
+                    <select name="entry_type_or_data" value={entryType} onChange={handleEntryTypeChange}>
                         <option value="bill">Bill</option>
                         <option value="cash">Cash</option>
                         <option value="gold">Gold</option>
@@ -59,104 +59,36 @@ export default function UnifiedEntryForm() {
                     </select>
                 </label>
                 <br />
+                <input name="gstin" placeholder="GSTIN" onChange={handleChange} />
 
-                <input
-                    name="gstin"
-                    placeholder="GSTIN"
-                    value={form.gstin}
-                    onChange={handleChange}
-                />
-
-                {(form.entry_type === 'bill' || form.entry_type === 'gold' || form.entry_type === 'stock') && (
+                {(entryType === 'bill' || entryType === 'gold' || entryType === 'stock') && (
                     <>
-                        <input
-                            name="purity"
-                            placeholder="Purity"
-                            value={form.purity}
-                            onChange={handleChange}
-                        />
-                        <input
-                            name="weight"
-                            type="number"
-                            placeholder="Weight"
-                            value={form.weight}
-                            onChange={handleChange}
-                        />
+                        <input name="purity" placeholder="Purity" onChange={handleChange} />
+                        <input name="weight" type="number" placeholder="Weight" onChange={handleChange} />
                     </>
                 )}
 
-                {form.entry_type === 'bill' && (
+                {entryType === 'bill' && (
                     <>
-                        <input
-                            name="bill_no"
-                            placeholder="Bill No"
-                            value={form.bill_no}
-                            onChange={handleChange}
-                        />
-                        <input
-                            name="wt"
-                            type="number"
-                            placeholder="Bill Weight"
-                            value={form.wt}
-                            onChange={handleChange}
-                        />
-                        <input
-                            name="rate"
-                            type="number"
-                            placeholder="Rate"
-                            value={form.rate}
-                            onChange={handleChange}
-                        />
-                        <input
-                            name="cgst"
-                            type="number"
-                            placeholder="CGST"
-                            value={form.cgst}
-                            onChange={handleChange}
-                        />
-                        <input
-                            name="sgst"
-                            type="number"
-                            placeholder="SGST"
-                            value={form.sgst}
-                            onChange={handleChange}
-                        />
-                        <input
-                            name="igst"
-                            type="number"
-                            placeholder="IGST"
-                            value={form.igst}
-                            onChange={handleChange}
-                        />
+                        <input name="bill_no" placeholder="Bill No" onChange={handleChange} />
+                        <input name="wt" type="number" placeholder="Bill Weight" onChange={handleChange} />
+                        <input name="rate" type="number" placeholder="Rate" onChange={handleChange} />
+                        <input name="cgst" type="number" placeholder="CGST" onChange={handleChange} />
+                        <input name="sgst" type="number" placeholder="SGST" onChange={handleChange} />
+                        <input name="igst" type="number" placeholder="IGST" onChange={handleChange} />
                     </>
                 )}
 
-                {form.entry_type === 'cash' && (
-                    <input
-                        name="cash_amount"
-                        type="number"
-                        placeholder="Cash Amount"
-                        value={form.cash_amount}
-                        onChange={handleChange}
-                    />
+                {entryType === 'cash' && (
+                    <input name="cash_amount" type="number" placeholder="Cash Amount" onChange={handleChange} />
                 )}
 
                 <label>
                     Bank Entry:
-                    <input
-                        type="checkbox"
-                        name="bank"
-                        checked={form.bank}
-                        onChange={handleChange}
-                    />
+                    <input type="checkbox" name="bank" onChange={handleChange} />
                 </label>
 
-                <input
-                    type="date"
-                    name="dated"
-                    value={form.dated}
-                    onChange={handleChange}
-                />
+                <input type="date" name="dated" onChange={handleChange} />
 
                 <button type="submit">Submit Entry</button>
             </form>

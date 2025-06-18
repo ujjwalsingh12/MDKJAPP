@@ -1,0 +1,38 @@
+/* General styles for the navbar
+.navbar {
+    border-radius: 5px;
+}
+
+/* Dark mode styles */
+.bg-dark {
+    background-color: #343a40 !important;
+}
+
+.text-white {
+    color: #ffffff !important;
+}
+
+/* Active nav item styles */
+.nav-item.active {
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+/* Button styles */
+.btn {
+    font-size: 1rem;
+}
+
+.btn-outline-secondary {
+    margin-left: auto;
+}
+
+.navbar-nav {
+    flex-direction: row;
+}
+
+.navbar-nav .nav-link {
+    padding: 0.5rem 1rem;
+}
+
+*/

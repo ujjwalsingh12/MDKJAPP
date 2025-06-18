@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { insertUnifiedEntry } from '../api/index';
 import { fetchAll } from '../api/index'; // assumes you have fetchAll API to get customers
-import 'bootstrap/dist/css/bootstrap.min.css';
+// import 'bootstrap/dist/css/bootstrap.min.css';
 import ViewTables from '../components/ViewTables'; // assumes you have a ViewTables component to display recent entries
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS for dropdowns and other components
+import './EntryDashboard.css'; // Custom styles for EntryDashboard
 
 const EntryDashboard = () => {
     const [entryType, setEntryType] = useState('');

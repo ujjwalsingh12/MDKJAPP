@@ -12,7 +12,7 @@ import Sidebar from './components/Sidebar';
 import Dashboardx from './components/Dashboardx';
 import Sales from './components/Sales';
 import Bills from './components/Bills';
-import Receipt from './components/Receipt';
+import Receipt from './components/CreateBill';
 import UnifiedEntryForm from './components/UnifiedEntryForm';
 // import ExcelInterface from './components/ExcelInterface';
 import ReceiptPage from './components/ReceiptPage';
@@ -21,12 +21,13 @@ import ViewTables from './components/ViewTables';
 import Stock from './pages/Stock';
 import Journal from './pages/Journal';
 import Bill from './pages/Bill';
+import CreateBill from './components/CreateBill';
 
 
 const AppRoutes = () => (
     <Router>
 
-        <Header />
+        {/* <Header /> */}
         <NavBar />
         <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -38,7 +39,7 @@ const AppRoutes = () => (
             <Route path="/sales" element={<Sales />} />
             <Route path="/stock" element={<Stock />} />
             <Route path="/bills" element={<Bills />} />
-            <Route path="/receipt" element={<Receipt />} />
+            <Route path="/create-bill" element={<CreateBill />} />
             <Route path="/receipt-page" element={<ReceiptPage />} />
             <Route path="/entry-dashboard" element={<EntryDashboard />} />
             <Route path="/accounts" element={<Accounts />} />
