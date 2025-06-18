@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchAll } from "../api/index";
 import { fetchTableSchema } from "../api/index"; // Import the function to fetch table schema
-// import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
 import './ViewTables.css'; // Import custom CSS for styling
 // import { updateData } from "../api/index"; // Import the function to update data
@@ -72,6 +72,7 @@ const DataTable = ({
     handleCancelClick,
     selectedRowIndex,
     handleRowHover,
+    handleSort,
     tableLayout,
     params
 }) => (
@@ -112,17 +113,23 @@ const DataTable = ({
 );
 
 
-
+const handleRowHover = (rowIndex) => {
+    try {
+        console.log(`Row hovered: ${rowIndex}`);
+        setSelectedRowIndex(rowIndex);
+    } catch (err) {
+        console.error(`Error handling row hover for row: ${rowIndex}`, err);
+    }
+};
 
 let checked = false;
 
 
-
 const ViewTables = ({ tableName, initialParams = {} }) => {
     const [data, setData] = useState([]);
-    const [selectedRowIndex, setSelectedRowIndex] = useState(null);
     const [sdata, setsData] = useState([]); // State for storing original data
     const [tableLayout, setTableLayout] = useState([]); // Dynamic table layout
+    const [selectedRowIndex, setSelectedRowIndex] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [params, setParams] = useState({
@@ -132,44 +139,37 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         sort_order: "asc",
         ...initialParams,
     });
+
+    // Fetch schema for the table
     const fetchSchema = async () => {
         try {
             const response = await fetchTableSchema(tableName);
             const schema = response.data.schema || [];
             const layout = schema.map((column) => ({
-                key: column.column_name, // Use the correct property name
-                label: column.column_name.toUpperCase(), // Use the correct property name
-                type: (column.data_type === "integer" || column.data_type === "numeric") ? "number" : "text", // Use the correct property name
-                editable: true, // Assume all columns are editable for now
+                key: column.column_name,
+                label: column.column_name.toUpperCase(),
+                type: column.data_type === "integer" || column.data_type === "numeric" ? "number" : "text",
+                editable: true,
             }));
             setTableLayout(layout);
-            checked = true;
         } catch (err) {
             console.error(`Error fetching schema for table: ${tableName}`, err);
             setError("Failed to fetch table schema");
-            checked = true;
         }
     };
-    if (!checked)
-        fetchSchema();
-    if (tableLayout.length > 0) {
-        console.log("tableLayout", tableLayout[2]['type']);
-    }
+
+    // Fetch data for the table
     const fetchData = async () => {
         setLoading(true);
         setError(null);
         try {
-            console.log(`Fetching data for table: ${tableName} with params:`, params);
             const response = await fetchAll(tableName, params);
-            console.log(`API response for table: ${tableName}`, response);
-
-            // Ensure response.data is an array
             if (Array.isArray(response.data)) {
                 setData(response.data);
-                console.log(data);
+                setsData(response.data); // Store original data
             } else {
                 console.error(`Unexpected data format for table: ${tableName}`, response.data);
-                setData([]); // Fallback to an empty array
+                setData([]);
             }
         } catch (err) {
             console.error(`Error fetching data for table: ${tableName}`, err);
@@ -179,47 +179,47 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         }
     };
 
+    // Handle tableName change
     useEffect(() => {
-        try {
-            console.log(`Params changed for table: ${tableName}, fetching data...`);
-            fetchData();
-        } catch (err) {
-            console.error(`Error in useEffect for table: ${tableName}`, err);
-        }
+        // Reset state when tableName changes
+        setData([]);
+        setsData([]);
+        setTableLayout([]);
+        setError(null);
+        setParams({
+            page: 1,
+            page_size: 10,
+            sort_by: null,
+            sort_order: "asc",
+            ...initialParams,
+        });
+
+        // Fetch schema and data for the new table
+        fetchSchema();
+        fetchData();
+    }, [tableName]); // Re-run when tableName changes
+
+    // Handle params change (e.g., pagination, sorting)
+    useEffect(() => {
+        fetchData();
     }, [params]);
 
     const handleSort = (column) => {
-        try {
-            console.log(`Sorting by column: ${column}`);
-            setParams((prev) => ({
-                ...prev,
-                sort_by: column,
-                sort_order: prev.sort_by === column && prev.sort_order === "asc" ? "desc" : "asc",
-            }));
-        } catch (err) {
-            console.error(`Error handling sort for column: ${column}`, err);
-        }
+        setParams((prev) => ({
+            ...prev,
+            sort_by: column,
+            sort_order: prev.sort_by === column && prev.sort_order === "asc" ? "desc" : "asc",
+        }));
     };
 
     const handlePageChange = (newPage) => {
-        try {
-            console.log(`Changing to page: ${newPage}`);
-            setParams((prev) => ({ ...prev, page: newPage }));
-        } catch (err) {
-            console.error(`Error changing page to: ${newPage}`, err);
-        }
+        setParams((prev) => ({ ...prev, page: newPage }));
     };
 
     const handlePageSizeChange = (e) => {
-        try {
-            const newPageSize = parseInt(e.target.value, 10) || 10;
-            console.log(`Changing page size to: ${newPageSize}`);
-            setParams((prev) => ({ ...prev, page_size: newPageSize }));
-        } catch (err) {
-            console.error(`Error changing page size`, err);
-        }
+        const newPageSize = parseInt(e.target.value, 10) || 10;
+        setParams((prev) => ({ ...prev, page_size: newPageSize }));
     };
-    //----------------------------------------------------
 
     const handleCellChange = (rowIndex, columnKey, value) => {
         const newData = [...data];
@@ -229,18 +229,16 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         delete snewData[rowIndex].isEditing;
         setData(newData);
         setsData(snewData);
-        console.log(data[rowIndex]);
-        console.log(sdata[rowIndex]);
     };
 
     const handleRowHover = (rowIndex) => {
         try {
-            console.log(`Row hovered: ${rowIndex}`);
             setSelectedRowIndex(rowIndex);
         } catch (err) {
             console.error(`Error handling row hover for row: ${rowIndex}`, err);
         }
     };
+
     const handleEditClick = (rowIndex, editing) => {
         if (editing) {
             const newData = [...data];
@@ -264,22 +262,13 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                 });
         }
     };
+
     const handleCancelClick = (rowIndex) => {
-        try {
-            console.log(`Cancel clicked for row: ${rowIndex}`);
-            const newData = [...data];
-            newData[rowIndex] = { ...newData[rowIndex].original }; // Restore original data
-            newData[rowIndex].isEditing = false; // Reset editing state
-            setData(newData);
-        } catch (err) {
-            console.error(`Error handling cancel click for row: ${rowIndex}`, err);
-        }
+        const newData = [...data];
+        newData[rowIndex] = { ...newData[rowIndex].original }; // Restore original data
+        newData[rowIndex].isEditing = false; // Reset editing state
+        setData(newData);
     };
-    // DataRow Component
-
-
-
-    //----------------------------------------------------
 
     return (
         <div>
@@ -303,45 +292,12 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                         handleCellChange={handleCellChange}
                         handleEditClick={handleEditClick}
                         handleCancelClick={handleCancelClick}
-                        selectedRowIndex={selectedRowIndex}
-                        handleRowHover={handleRowHover}
                         tableLayout={tableLayout}
-                        params={params} // Pass params to DataTable for sorting
+                        handleSort={handleSort}
+                        params={params}
+                        handleRowHover={handleRowHover}
+                        selectedRowIndex={selectedRowIndex}
                     />
-                    {/* <table className="table table-bordered">
-                        <thead>
-                            <tr>
-                                {data.length > 0 &&
-                                    Object.keys(data[0]).map((key) => (
-                                        <th key={key} onClick={() => handleSort(key)} style={{ cursor: "pointer" }}>
-                                            {key} {params.sort_by === key ? (params.sort_order === "asc" ? "↑" : "↓") : ""}
-                                        </th>
-                                    ))}
-                                <th>Edit</th>
-                                <th>Cancel</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {
-
-
-                                data.map((row, rowIndex) => (
-                                    <DataRow
-                                        key={rowIndex}
-                                        row={row}
-                                        rowIndex={rowIndex}
-                                        handleCellChange={handleCellChange}
-                                        handleEditClick={handleEditClick}
-                                        handleCancelClick={handleCancelClick}
-                                        selectedRowIndex={selectedRowIndex}
-                                        handleRowHover={handleRowHover}
-                                    />
-                                ))
-
-
-                            }
-                        </tbody>
-                    </table> */}
                     <div className="d-flex justify-content-between align-items-center">
                         <button
                             className="btn btn-primary"
@@ -350,9 +306,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                         >
                             Previous
                         </button>
-                        <span>
-                            Page {params.page}
-                        </span>
+                        <span>Page {params.page}</span>
                         <button
                             className="btn btn-primary"
                             onClick={() => handlePageChange(params.page + 1)}
