@@ -265,7 +265,7 @@ const CreateBill = () => {
     margin: '0 auto',
     padding: '20px',
     fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f8f9fa'
+    // backgroundColor: '#f8f9fa'
   };
 
   const headerSectionStyle = {
@@ -318,7 +318,7 @@ const CreateBill = () => {
   };
 
   const billPreviewStyle = {
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
     padding: '40px',
     borderRadius: '8px',
     marginBottom: '20px',
@@ -344,16 +344,6 @@ const CreateBill = () => {
     padding: '8px'
   };
 
-  const controlsStyle = {
-    // display: 'flex',
-    flexWrap: 'wrap',
-    gap: '15px',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: '20px',
-    borderRadius: '8px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-  };
 
   const buttonStyle = {
     padding: '8px 16px',
@@ -697,7 +687,7 @@ const CreateBill = () => {
           </table>
 
 
-          <div style={controlsStyle}>
+          <div className='controlStyle'>
             <button
               style={{ ...buttonStyle, backgroundColor: '#28a745', color: 'white', fontSize: '16px', padding: '12px 24px' }}
               onClick={handleAddRow}
@@ -822,7 +812,7 @@ const CreateBill = () => {
 
         {/* Controls */}
 
-        <div style={controlsStyle} className='print-hide'>
+        <div className='print-hide controlStyle'>
           <div style={{ alignItems: 'center', gap: '8px' }} >
             <label style={{ fontSize: '14px', fontWeight: 'bold' }}>CGST (%):</label>
             <input
@@ -1061,4 +1051,4 @@ const convertToWords = (num) => {
 
 
 
-// ------------- SCROLL UP TO SEE THE END OF FILE -------------
+// ------------- SCROLL UP TO SEE THE END OF FILE ------------- 

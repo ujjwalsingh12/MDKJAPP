@@ -280,7 +280,7 @@ const EntryDashboard = () => {
     const [showTable, setShowTable] = useState(false);
 
     return (
-        <div className="entry-dashboard container">
+        <div className="entry-dashboard__container">
             <h2 className="entry-dashboard__title">{(entryType.toUpperCase() || "Unified")} Dashboard</h2>
 
             <form onSubmit={handleSubmit} className="entry-dashboard__form">
