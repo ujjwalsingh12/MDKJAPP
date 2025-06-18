@@ -69,7 +69,7 @@ const DataTable = ({
     params
 }) => (
     <table className="view-tables__table">
-        <thead className="view-tables__header">
+        <thead className="view-tables">
             <tr className="view-tables__header-row">
                 <th className="view-tables__header-cell">ID</th>
                 {tableLayout.map((column) => (

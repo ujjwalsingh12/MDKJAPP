@@ -145,6 +145,8 @@ const EntryDashboard = () => {
                 return (
                     <>
                         <input className="entry-dashboard__input" placeholder="Bill No" value={form.bill_no} onChange={(e) => handleChange('bill_no', e.target.value)} />
+                        <div></div >
+                        Weight Details: <span></span>
                         <input className="entry-dashboard__input" placeholder="Purity" value={form.purity} onChange={(e) => handleChange('purity', e.target.value)} />
                         <input
                             className="entry-dashboard__input"
@@ -153,6 +155,12 @@ const EntryDashboard = () => {
                             value={parseFloat(form.wt).toFixed(3) || ''}
                             onChange={(e) => handleChange('wt', parseFloat(e.target.value) || 0)}
                         />
+                        <input className="entry-dashboard__input" placeholder="Rate" type="number" value={form.rate} onChange={(e) => handleChange('rate', e.target.value)} />
+                        <div></div>
+                        Taxes: <span></span>
+                        <input className="entry-dashboard__input" placeholder="CGST" type="number" value={form.cgst} onChange={(e) => handleChange('cgst', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="SGST" type="number" value={form.sgst} onChange={(e) => handleChange('sgst', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="IGST" type="number" value={form.igst} onChange={(e) => handleChange('igst', e.target.value)} />
                         <button
                             type="button"
                             className={`entry-dashboard__button ${form.is_debit ? 'entry-dashboard__button--debit' : 'entry-dashboard__button--credit'}`}
@@ -160,28 +168,28 @@ const EntryDashboard = () => {
                         >
                             {form.is_debit ? 'Debit' : 'Credit'}
                         </button>
-                        <input className="entry-dashboard__input" placeholder="Rate" type="number" value={form.rate} onChange={(e) => handleChange('rate', e.target.value)} />
-                        <input className="entry-dashboard__input" placeholder="CGST" type="number" value={form.cgst} onChange={(e) => handleChange('cgst', e.target.value)} />
-                        <input className="entry-dashboard__input" placeholder="SGST" type="number" value={form.sgst} onChange={(e) => handleChange('sgst', e.target.value)} />
-                        <input className="entry-dashboard__input" placeholder="IGST" type="number" value={form.igst} onChange={(e) => handleChange('igst', e.target.value)} />
+                        <div className="entry-dashboard__summary">
+                            <strong>Formatted Amount: </strong>
+                            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.amount || 0)}
+                            <span>
+                                {form.is_debit ? ' Debited' : ' Credited'}
+                            </span>
+                        </div>
                     </>
                 );
             case 'cash':
                 return (
                     <>
-                        <div className="entry-dashboard__summary">
-                            <strong>Formatted Amount: </strong>
-                            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.cash_amount || 0)}
-                        </div>
-                        <input
-                            className="entry-dashboard__input"
-                            placeholder="Cash Amount"
-                            type="number"
-                            value={form.cash_amount}
-                            onChange={(e) => handleChange('cash_amount', parseFloat(e.target.value) || 0)}
-                            style={{ color: form.cash_amount < 0 ? 'red' : 'green' }}
-                        />
-                        <div className="entry-dashboard__button-group">
+
+                        <div className="entry-dashboard__button-group div">
+                            <input
+                                className="entry-dashboard__input"
+                                placeholder="Cash Amount"
+                                type="number"
+                                value={form.cash_amount}
+                                onChange={(e) => handleChange('cash_amount', parseFloat(e.target.value) || 0)}
+                                style={{ color: form.cash_amount < 0 ? 'red' : 'green' }}
+                            />
                             <button
                                 type="button"
                                 className="entry-dashboard__button"
@@ -189,16 +197,23 @@ const EntryDashboard = () => {
                             >
                                 Convert to Lakhs
                             </button>
+                            <button
+                                type="button"
+                                className={`entry-dashboard__button ${form.is_debit ? 'entry-dashboard__button--debit' : 'entry-dashboard__button--credit'}`}
+                                onClick={() => {
+                                    handleChange('is_debit', !form.is_debit);
+                                }}
+                            >
+                                {form.is_debit ? 'Debit' : 'Credit'}
+                            </button >
                         </div>
-                        <button
-                            type="button"
-                            className={`entry-dashboard__button ${form.is_debit ? 'entry-dashboard__button--debit' : 'entry-dashboard__button--credit'}`}
-                            onClick={() => {
-                                handleChange('is_debit', !form.is_debit);
-                            }}
-                        >
-                            {form.is_debit ? 'Debit' : 'Credit'}
-                        </button>
+                        <div className="entry-dashboard__summary">
+                            <strong>Formatted Amount: </strong>
+                            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.cash_amount || 0)}
+                            <span>
+                                {form.is_debit ? ' Debited' : ' Credited'}
+                            </span>
+                        </div>
                     </>
                 );
             case 'stock':
@@ -206,15 +221,15 @@ const EntryDashboard = () => {
                 return (
                     <>
                         <div className="entry-dashboard__field">
-                            <label>Purity</label>
                             <div>
-                                <input
-                                    className="entry-dashboard__input"
-                                    placeholder="Enter purity"
-                                    value={form.purity}
-                                    onChange={(e) => handleChange('purity', e.target.value)}
-                                />
-                                <div className="entry-dashboard__button-group">
+                                <div className="entry-dashboard__button-group div">
+                                    <label >Purity</label>
+                                    <input
+                                        className="entry-dashboard__input"
+                                        placeholder="Enter purity"
+                                        value={form.purity}
+                                        onChange={(e) => handleChange('purity', e.target.value)}
+                                    />
                                     {['18CT', '22CT', '99.5', '99.99'].map((option) => (
                                         <button
                                             key={option}
@@ -246,6 +261,9 @@ const EntryDashboard = () => {
                             <h4>
                                 <strong>Final Weight: </strong>
                                 {new Intl.NumberFormat('en-IN', { style: 'decimal', minimumFractionDigits: 3 }).format(form.weight || 0)}
+                                <span>
+                                    {form.is_debit ? ' Debited' : ' Credited'}
+                                </span>
                             </h4>
                         </div>
                     </>
@@ -263,12 +281,11 @@ const EntryDashboard = () => {
 
     return (
         <div className="entry-dashboard container">
-            <h2 className="entry-dashboard__title">Unified Entry Dashboard</h2>
+            <h2 className="entry-dashboard__title">{(entryType.toUpperCase() || "Unified")} Dashboard</h2>
 
             <form onSubmit={handleSubmit} className="entry-dashboard__form">
                 <div className="entry-dashboard__field">
-                    <label>Entry Type</label>
-                    <div className="entry-dashboard__button-group">
+                    <div className="entry-dashboard__button-group-nav">
                         {['bill', 'cash', 'stock', 'gold', 'remarks'].map((type) => (
                             <button
                                 key={type}
@@ -282,6 +299,15 @@ const EntryDashboard = () => {
                     </div>
                 </div>
 
+                <div className="entry-dashboard__field">
+                    <button
+                        type="button"
+                        className={`entry-dashboard__button ${form.bank ? 'entry-dashboard__button--bank' : 'entry-dashboard__button--cash'}`}
+                        onClick={() => handleChange('bank', !form.bank)}
+                    >
+                        {form.bank ? 'Bank Transaction' : 'Cash Transaction'}
+                    </button>
+                </div>
                 <div className="entry-dashboard__field">
                     <label>Customer Name</label>
                     <input
@@ -309,14 +335,14 @@ const EntryDashboard = () => {
                     )}
                     {selectedCustomer && (
                         <>
-                            GSTIN: <input className="entry-dashboard__input" disabled value={selectedCustomer.gstin} placeholder="GSTIN" />
-                            ADDRESS: <input className="entry-dashboard__input" disabled value={selectedCustomer.address} placeholder="Address" />
+                            <input className="entry-dashboard__input" disabled value={selectedCustomer.gstin} placeholder="GSTIN" />
+                            <input className="entry-dashboard__input" disabled value={selectedCustomer.address} placeholder="Address" />
                         </>
                     )}
                 </div>
 
-                <input type="date" className="entry-dashboard__input" value={form.dated} onChange={(e) => handleChange('dated', e.target.value)} />
                 <div className="entry-dashboard__button-group">
+                    <input type="date" className="entry-dashboard__input" value={form.dated} onChange={(e) => handleChange('dated', e.target.value)} />
                     <button
                         type="button"
                         className={`entry-dashboard__button ${form.dated === new Date().toISOString().slice(0, 10) ? 'entry-dashboard__button--active' : ''}`}
@@ -340,15 +366,6 @@ const EntryDashboard = () => {
                     </button>
                 </div>
 
-                <div className="entry-dashboard__field">
-                    <button
-                        type="button"
-                        className={`entry-dashboard__button ${form.bank ? 'entry-dashboard__button--bank' : 'entry-dashboard__button--cash'}`}
-                        onClick={() => handleChange('bank', !form.bank)}
-                    >
-                        {form.bank ? 'Bank Transaction' : 'Cash Transaction'}
-                    </button>
-                </div>
 
                 {renderFields()}
 
