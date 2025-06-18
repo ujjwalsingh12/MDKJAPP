@@ -1,5 +1,5 @@
 /* General Container Styles */
-.container {
+.entry-dashboard {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -8,8 +8,156 @@
     margin-bottom: 20px;
 }
 
+.entry-dashboard__title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Form Styles */
+.entry-dashboard__form {
+    /* display: flex; */
+    flex-direction: column;
+    gap: 20px;
+}
+
+.entry-dashboard__field {
+    /* display: flex; */
+    flex-direction: column;
+    gap: 8px;
+}
+
+.entry-dashboard__input,
+.entry-dashboard__textarea {
+    padding: 12px;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.entry-dashboard__input:focus,
+.entry-dashboard__textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+    outline: none;
+}
+
+.entry-dashboard__textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Button Group */
+.entry-dashboard__button-group {
+    /* display: flex; */
+    gap: 10px;
+}
+
+.entry-dashboard__button {
+    padding: 10px 16px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #888888;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.entry-dashboard__button:hover {
+    background-color: #4338ca;
+    box-shadow: 0 6px 8px var(--shadow-color);
+}
+
+.entry-dashboard__button--active {
+    background-color: #4338ca;
+    box-shadow: 0 6px 8px var(--shadow-color);
+}
+
+.entry-dashboard__button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Dropdown Styles */
+.entry-dashboard__dropdown {
+    position: absolute;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    margin-top: 4px;
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.entry-dashboard__dropdown-item {
+    padding: 10px;
+    font-size: 1rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.entry-dashboard__dropdown-item:hover {
+    background-color: var(--hover-color);
+}
+
+/* Submit Button */
+.entry-dashboard__submit-button {
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.entry-dashboard__submit-button:hover {
+    background-color: #4338ca;
+    box-shadow: 0 6px 8px var(--shadow-color);
+}
+
+.entry-dashboard__submit-button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Toggle Button */
+.entry-dashboard__toggle-button {
+    margin-top: 20px;
+    padding: 10px 16px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: var(--secondary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.entry-dashboard__toggle-button:hover {
+    background-color: #4b5563;
+    box-shadow: 0 6px 8px var(--shadow-color);
+}
+
 /* Table Styles */
-table {
+.entry-dashboard__table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
@@ -19,70 +167,36 @@ table {
     overflow: hidden;
 }
 
-thead {
+.entry-dashboard__table thead {
     background-color: var(--primary-color);
     color: #ffffff;
     text-align: left;
 }
 
-thead th {
+.entry-dashboard__table th,
+.entry-dashboard__table td {
     padding: 12px 16px;
-    font-size: var(--font-size-base);
-    font-weight: 600;
-}
-
-tbody tr {
+    font-size: 1rem;
     border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.3s ease;
 }
 
-tbody tr:hover {
+.entry-dashboard__table tbody tr:hover {
     background-color: var(--hover-color);
 }
 
-tbody td {
-    padding: 12px 16px;
-    font-size: var(--font-size-small);
-    color: var(--text-color);
-}
-
-/* Buttons */
-button {
-    padding: 8px 16px;
-    font-size: var(--font-size-small);
-    font-weight: 500;
-    color: #ffffff;
-    background-color: var(--primary-color);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 6px var(--shadow-color);
-}
-
-button:hover {
-    background-color: #4338ca;
-    box-shadow: 0 6px 8px var(--shadow-color);
-}
-
-button:focus {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-}
-
 /* Pagination Controls */
-.pagination {
-    display: flex;
+.entry-dashboard__pagination {
+    /* display: flex; */
     justify-content: space-between;
     align-items: center;
     margin-top: 20px;
 }
 
-.pagination button {
+.entry-dashboard__pagination button {
     padding: 8px 12px;
-    font-size: var(--font-size-small);
+    font-size: 1rem;
     font-weight: 500;
-    color: #ffffff;
+    color: #888888;
     background-color: var(--primary-color);
     border: none;
     border-radius: 8px;
@@ -90,46 +204,56 @@ button:focus {
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.pagination button:hover {
+.entry-dashboard__pagination button:hover {
     background-color: #4338ca;
 }
 
-.pagination span {
-    font-size: var(--font-size-base);
+.entry-dashboard__pagination span {
+    font-size: 1rem;
     font-weight: 500;
     color: var(--text-color);
 }
 
 /* Dark Mode Styles */
-body.dark .container {
+body.dark .entry-dashboard {
     background-color: var(--dark-card-bg);
     border-color: var(--dark-border-color);
     box-shadow: 0 4px 6px var(--dark-shadow-color);
 }
 
-body.dark table {
+body.dark .entry-dashboard__title {
+    color: var(--dark-text-color);
+}
+
+body.dark .entry-dashboard__input,
+body.dark .entry-dashboard__textarea {
+    background-color: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+    color: var(--dark-text-color);
+}
+
+body.dark .entry-dashboard__dropdown {
     background-color: var(--dark-card-bg);
     border-color: var(--dark-border-color);
 }
 
-body.dark thead {
-    background-color: #2a2a2a;
+body.dark .entry-dashboard__dropdown-item {
     color: var(--dark-text-color);
 }
 
-body.dark tbody tr:hover {
+body.dark .entry-dashboard__dropdown-item:hover {
     background-color: var(--dark-hover-color);
 }
 
-body.dark tbody td {
+body.dark .entry-dashboard__table {
+    background-color: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+}
+
+body.dark .entry-dashboard__table tbody tr:hover {
+    background-color: var(--dark-hover-color);
+}
+
+body.dark .entry-dashboard__pagination span {
     color: var(--dark-text-color);
-}
-
-body.dark button {
-    background-color: #3b82f6;
-    box-shadow: 0 4px 6px var(--dark-shadow-color);
-}
-
-body.dark button:hover {
-    background-color: #2563eb;
 }

@@ -1,0 +1,200 @@
+/* General Styling */
+.create-bill {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.create-bill__title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* Form Section */
+.create-bill__form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.create-bill__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.create-bill__label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.create-bill__input,
+.create-bill__textarea {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.create-bill__input:focus,
+.create-bill__textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+    outline: none;
+}
+
+.create-bill__textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Dropdown Styling */
+.create-bill__dropdown {
+    position: absolute;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    margin-top: 0.5rem;
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.create-bill__dropdown-item {
+    padding: 0.75rem;
+    font-size: 1rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.create-bill__dropdown-item:hover {
+    background-color: var(--hover-color);
+}
+
+/* Preview Section */
+.create-bill__preview {
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.create-bill__preview-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.create-bill__preview-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.create-bill__store-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.create-bill__store-address,
+.create-bill__store-contact {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+/* Info Section */
+.create-bill__info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.create-bill__customer-info,
+.create-bill__bill-details {
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.create-bill__info-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Table Styling */
+.create-bill__table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.create-bill__table th,
+.create-bill__table td {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.create-bill__table th {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.create-bill__table td {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+.create-bill__actions {
+    text-align: center;
+}
+
+/* Button Styling */
+.create-bill__actions button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.create-bill__actions button:hover {
+    background-color: #4338ca;
+}
+
+.create-bill__actions button:last-child {
+    background-color: var(--danger-color);
+}
+
+.create-bill__actions button:last-child:hover {
+    background-color: #c82333;
+}

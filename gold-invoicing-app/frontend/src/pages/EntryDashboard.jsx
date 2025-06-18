@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { insertUnifiedEntry } from '../api/index';
 import { fetchAll } from '../api/index'; // assumes you have fetchAll API to get customers
-// import 'bootstrap/dist/css/bootstrap.min.css';
 import ViewTables from '../components/ViewTables'; // assumes you have a ViewTables component to display recent entries
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS for dropdowns and other components
 import './EntryDashboard.css'; // Custom styles for EntryDashboard
@@ -69,8 +68,6 @@ const EntryDashboard = () => {
         setForm(prev => ({ ...prev, [field]: value }));
     };
 
-
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -79,14 +76,12 @@ const EntryDashboard = () => {
             return;
         }
 
-        // Prepare the payload
         const payload = {
             ...form,
             entry_type: entryType,
             gstin: selectedCustomer.gstin,
         };
 
-        // Show confirmation alert
         const confirmationMessage = `
     Please confirm the following details before submission:
 
@@ -116,20 +111,12 @@ const EntryDashboard = () => {
     `.trim() : ''}
     `.trim();
         if (!window.confirm(confirmationMessage)) {
-            // If the user cancels, stop the submission
             return;
         }
 
         try {
-            // Submit the entry
-            try {
-                console.log('Submitting entry with payload:', { payload });
-                await insertUnifiedEntry(payload);
-                // console.log('Entry inserted successfully:', response);
-            } catch (error) {
-                console.error('Error inserting entry:', error);
-                // q// throw error; // Re-throw the error to stop further execution
-            }
+            console.log('Submitting entry with payload:', { payload });
+            await insertUnifiedEntry(payload);
             alert('Entry added successfully!');
             setForm({
                 dated: new Date().toISOString().slice(0, 10),
@@ -157,10 +144,10 @@ const EntryDashboard = () => {
             case 'bill':
                 return (
                     <>
-                        <input className="form-control mb-2" placeholder="Bill No" value={form.bill_no} onChange={(e) => handleChange('bill_no', e.target.value)} />
-                        <input className="form-control mb-2" placeholder="Purity" value={form.purity} onChange={(e) => handleChange('purity', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="Bill No" value={form.bill_no} onChange={(e) => handleChange('bill_no', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="Purity" value={form.purity} onChange={(e) => handleChange('purity', e.target.value)} />
                         <input
-                            className="form-control mb-2"
+                            className="entry-dashboard__input"
                             placeholder="Weight (wt)"
                             type="number"
                             value={parseFloat(form.wt).toFixed(3) || ''}
@@ -168,36 +155,36 @@ const EntryDashboard = () => {
                         />
                         <button
                             type="button"
-                            className={`btn mb-2 ${form.is_debit ? 'btn-danger' : 'btn-success'}`}
+                            className={`entry-dashboard__button ${form.is_debit ? 'entry-dashboard__button--debit' : 'entry-dashboard__button--credit'}`}
                             onClick={() => handleChange('is_debit', !form.is_debit)}
                         >
                             {form.is_debit ? 'Debit' : 'Credit'}
                         </button>
-                        <input className="form-control mb-2" placeholder="Rate" type="number" value={form.rate} onChange={(e) => handleChange('rate', e.target.value)} />
-                        <input className="form-control mb-2" placeholder="CGST" type="number" value={form.cgst} onChange={(e) => handleChange('cgst', e.target.value)} />
-                        <input className="form-control mb-2" placeholder="SGST" type="number" value={form.sgst} onChange={(e) => handleChange('sgst', e.target.value)} />
-                        <input className="form-control mb-2" placeholder="IGST" type="number" value={form.igst} onChange={(e) => handleChange('igst', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="Rate" type="number" value={form.rate} onChange={(e) => handleChange('rate', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="CGST" type="number" value={form.cgst} onChange={(e) => handleChange('cgst', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="SGST" type="number" value={form.sgst} onChange={(e) => handleChange('sgst', e.target.value)} />
+                        <input className="entry-dashboard__input" placeholder="IGST" type="number" value={form.igst} onChange={(e) => handleChange('igst', e.target.value)} />
                     </>
                 );
             case 'cash':
                 return (
                     <>
-                        <div className="mb-2">
+                        <div className="entry-dashboard__summary">
                             <strong>Formatted Amount: </strong>
                             {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(form.cash_amount || 0)}
                         </div>
                         <input
-                            className="form-control mb-2"
+                            className="entry-dashboard__input"
                             placeholder="Cash Amount"
                             type="number"
                             value={form.cash_amount}
                             onChange={(e) => handleChange('cash_amount', parseFloat(e.target.value) || 0)}
                             style={{ color: form.cash_amount < 0 ? 'red' : 'green' }}
                         />
-                        <div className="btn-group mb-2">
+                        <div className="entry-dashboard__button-group">
                             <button
                                 type="button"
-                                className="btn btn-outline-secondary"
+                                className="entry-dashboard__button"
                                 onClick={() => handleChange('cash_amount', (form.cash_amount || 0) * 100000)}
                             >
                                 Convert to Lakhs
@@ -205,35 +192,34 @@ const EntryDashboard = () => {
                         </div>
                         <button
                             type="button"
-                            className={`btn mb-2 ${form.is_debit ? 'btn-danger' : 'btn-success'}`}
+                            className={`entry-dashboard__button ${form.is_debit ? 'entry-dashboard__button--debit' : 'entry-dashboard__button--credit'}`}
                             onClick={() => {
                                 handleChange('is_debit', !form.is_debit);
                             }}
                         >
                             {form.is_debit ? 'Debit' : 'Credit'}
                         </button>
-                        <div>   </div>
                     </>
                 );
             case 'stock':
             case 'gold':
                 return (
                     <>
-                        <div className="mb-2">
+                        <div className="entry-dashboard__field">
                             <label>Purity</label>
                             <div>
                                 <input
-                                    className="form-control"
+                                    className="entry-dashboard__input"
                                     placeholder="Enter purity"
                                     value={form.purity}
                                     onChange={(e) => handleChange('purity', e.target.value)}
                                 />
-                                <div className="btn-group">
+                                <div className="entry-dashboard__button-group">
                                     {['18CT', '22CT', '99.5', '99.99'].map((option) => (
                                         <button
                                             key={option}
                                             type="button"
-                                            className={`btn ${form.purity === option ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            className={`entry-dashboard__button ${form.purity === option ? 'entry-dashboard__button--active' : ''}`}
                                             onClick={() => handleChange('purity', option)}
                                         >
                                             {option}
@@ -243,7 +229,7 @@ const EntryDashboard = () => {
                             </div>
                         </div>
                         <input
-                            className="form-control mb-2"
+                            className="entry-dashboard__input"
                             placeholder="Weight"
                             type="number"
                             value={form.weight || ''}
@@ -251,12 +237,12 @@ const EntryDashboard = () => {
                         />
                         <button
                             type="button"
-                            className={`btn mb-2 ${form.is_debit ? 'btn-danger' : 'btn-success'}`}
+                            className={`entry-dashboard__button ${form.is_debit ? 'entry-dashboard__button--debit' : 'entry-dashboard__button--credit'}`}
                             onClick={() => handleChange('is_debit', !form.is_debit)}
                         >
                             {form.is_debit ? 'Debit' : 'Credit'}
                         </button>
-                        <div className="mb-2">
+                        <div className="entry-dashboard__summary">
                             <h4>
                                 <strong>Final Weight: </strong>
                                 {new Intl.NumberFormat('en-IN', { style: 'decimal', minimumFractionDigits: 3 }).format(form.weight || 0)}
@@ -266,7 +252,7 @@ const EntryDashboard = () => {
                 );
             case 'remarks':
                 return (
-                    <textarea className="form-control mb-2" placeholder="Remark Text" value={form.remark_text} onChange={(e) => handleChange('remark_text', e.target.value)} />
+                    <textarea className="entry-dashboard__textarea" placeholder="Remark Text" value={form.remark_text} onChange={(e) => handleChange('remark_text', e.target.value)} />
                 );
             default:
                 return null;
@@ -276,18 +262,18 @@ const EntryDashboard = () => {
     const [showTable, setShowTable] = useState(false);
 
     return (
-        <div className="container mt-4 p-4" style={{ padding: '20px', margin: '20px' }}>
-            <h2 className="mb-4">Unified Entry Dashboard</h2>
+        <div className="entry-dashboard container">
+            <h2 className="entry-dashboard__title">Unified Entry Dashboard</h2>
 
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
+            <form onSubmit={handleSubmit} className="entry-dashboard__form">
+                <div className="entry-dashboard__field">
                     <label>Entry Type</label>
-                    <div className="btn-group w-100">
+                    <div className="entry-dashboard__button-group">
                         {['bill', 'cash', 'stock', 'gold', 'remarks'].map((type) => (
                             <button
                                 key={type}
                                 type="button"
-                                className={`btn ${entryType === type ? 'btn-primary' : 'btn-outline-primary'}`}
+                                className={`entry-dashboard__button ${entryType === type ? 'entry-dashboard__button--active' : ''}`}
                                 onClick={() => setEntryType(type)}
                             >
                                 {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -296,10 +282,10 @@ const EntryDashboard = () => {
                     </div>
                 </div>
 
-                <div className="mb-3 position-relative">
+                <div className="entry-dashboard__field">
                     <label>Customer Name</label>
                     <input
-                        className="form-control"
+                        className="entry-dashboard__input"
                         value={customerSearchTerm}
                         placeholder="Search or enter customer name"
                         onChange={(e) => {
@@ -309,11 +295,11 @@ const EntryDashboard = () => {
                         onFocus={() => setShowCustomerDropdown(true)}
                     />
                     {showCustomerDropdown && (
-                        <ul className="list-group position-absolute w-100" style={{ zIndex: 1000 }}>
+                        <ul className="entry-dashboard__dropdown">
                             {filteredCustomers.map((c, i) => (
                                 <li
                                     key={i}
-                                    className="list-group-item list-group-item-action"
+                                    className="entry-dashboard__dropdown-item"
                                     onClick={() => handleCustomerSelect(c)}
                                 >
                                     {c.name} ({c.phone})
@@ -323,52 +309,50 @@ const EntryDashboard = () => {
                     )}
                     {selectedCustomer && (
                         <>
-                            GSTIN: <input className="form-control mb-2" disabled value={selectedCustomer.gstin} placeholder="GSTIN" />
-
-                            ADDRESS : <input className="form-control mb-2" disabled value={selectedCustomer.address} placeholder="Address" />
+                            GSTIN: <input className="entry-dashboard__input" disabled value={selectedCustomer.gstin} placeholder="GSTIN" />
+                            ADDRESS: <input className="entry-dashboard__input" disabled value={selectedCustomer.address} placeholder="Address" />
                         </>
                     )}
                 </div>
 
-
-                <input type="date" className="form-control mb-2" value={form.dated} onChange={(e) => handleChange('dated', e.target.value)} />
-                <div className="btn-group mb-2">
+                <input type="date" className="entry-dashboard__input" value={form.dated} onChange={(e) => handleChange('dated', e.target.value)} />
+                <div className="entry-dashboard__button-group">
                     <button
                         type="button"
-                        className={`btn ${form.dated === new Date().toISOString().slice(0, 10) ? 'btn-primary' : 'btn-outline-primary'}`}
+                        className={`entry-dashboard__button ${form.dated === new Date().toISOString().slice(0, 10) ? 'entry-dashboard__button--active' : ''}`}
                         onClick={() => handleChange('dated', new Date().toISOString().slice(0, 10))}
                     >
                         Today
                     </button>
                     <button
                         type="button"
-                        className={`btn ${form.dated === new Date(Date.now() - 86400000).toISOString().slice(0, 10) ? 'btn-primary' : 'btn-outline-primary'}`}
+                        className={`entry-dashboard__button ${form.dated === new Date(Date.now() - 86400000).toISOString().slice(0, 10) ? 'entry-dashboard__button--active' : ''}`}
                         onClick={() => handleChange('dated', new Date(Date.now() - 86400000).toISOString().slice(0, 10))}
                     >
                         Yesterday
                     </button>
                     <button
                         type="button"
-                        className={`btn ${form.dated === new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10) ? 'btn-primary' : 'btn-outline-primary'}`}
+                        className={`entry-dashboard__button ${form.dated === new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10) ? 'entry-dashboard__button--active' : ''}`}
                         onClick={() => handleChange('dated', new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10))}
                     >
                         Day Before Yesterday
                     </button>
                 </div>
 
-                <div className="mb-2">
+                <div className="entry-dashboard__field">
                     <button
                         type="button"
-                        className={`btn ${form.bank ? 'btn-success' : 'btn-danger'}`}
+                        className={`entry-dashboard__button ${form.bank ? 'entry-dashboard__button--bank' : 'entry-dashboard__button--cash'}`}
                         onClick={() => handleChange('bank', !form.bank)}
-                        style={{ fontWeight: 'bold' }}
                     >
                         {form.bank ? 'Bank Transaction' : 'Cash Transaction'}
                     </button>
                 </div>
 
                 {renderFields()}
-                <div className="alert alert-info mt-3">
+
+                <div className="entry-dashboard__summary">
                     <h5>Entry Summary</h5>
                     <p><strong>Date:</strong> {form.dated} ({new Date(form.dated).toLocaleDateString('en-US', { weekday: 'long' })})</p>
                     <p><strong>Customer Name:</strong> {selectedCustomer?.name || 'N/A'}</p>
@@ -395,23 +379,25 @@ const EntryDashboard = () => {
                     )}
                     <p><strong>Bank Transaction:</strong> {form.bank ? 'Yes' : 'No'}</p>
                 </div>
-                <button type="submit" className="btn btn-primary mt-3">Submit Entry</button>
-                <p></p>
-                {entryType !== 'remarks' && (
-                    <textarea className="form-control mb-2" placeholder="Remark (Optional)" value={form.remark_text} onChange={(e) => handleChange('remark_text', e.target.value)} />
-                )}
 
+                <button type="submit" className="entry-dashboard__submit-button">Submit Entry</button>
+
+                {entryType !== 'remarks' && (
+                    <textarea className="entry-dashboard__textarea" placeholder="Remark (Optional)" value={form.remark_text} onChange={(e) => handleChange('remark_text', e.target.value)} />
+                )}
             </form>
+
             <button
                 type="button"
-                className="btn btn-secondary mt-3"
+                className="entry-dashboard__toggle-button"
                 onClick={() => setShowTable(!showTable)}
             >
                 {showTable ? 'Hide Recent Entries' : 'Show Recent Entries'}
             </button>
+
             {showTable && (
                 <>
-                    <h3 className="mt-5">Recent Journal Entries</h3>
+                    <h3 className="entry-dashboard__recent-title">Recent Journal Entries</h3>
                     <ViewTables
                         tableName={entryType || 'journal'}
                         initialParams={{
@@ -422,7 +408,7 @@ const EntryDashboard = () => {
                     />
                 </>
             )}
-        </div >
+        </div>
     );
 };
 

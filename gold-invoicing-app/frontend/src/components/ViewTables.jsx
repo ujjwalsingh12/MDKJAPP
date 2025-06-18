@@ -5,9 +5,6 @@ import { fetchTableSchema } from "../api/index"; // Import the function to fetch
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
 import './ViewTables.css'; // Import custom CSS for styling
-// import { updateData } from "../api/index"; // Import the function to update data
-
-
 
 const DataRow = ({
     row,
@@ -21,47 +18,42 @@ const DataRow = ({
 }) => (
     <tr
         key={rowIndex}
-        className={selectedRowIndex === rowIndex ? 'table-active' : ''}
+        className={`view-tables__row ${selectedRowIndex === rowIndex ? 'view-tables__row--active' : ''}`}
         onMouseEnter={() => handleRowHover(rowIndex)}
     >
         <td></td>
-        {
-            tableLayout.map((column, i) => (
-                <td key={column.key}>
-                    {row.isEditing && column.editable ? (
-                        <input
-                            type={column.type === 'number' ? 'number' : 'text'}
-                            className="form-control"
-                            value={row[column.key] || ""}
-                            onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
-                        />
-                    ) : (
-                        row[column.key] === null || row[column.key] === undefined || row[column.key] === ""
-                            ? "N/A" // Handle null or missing values
-                            : row[column.key]
-                    )}
-                </td>
-            ))
-
-            // Display value or "N/A" if null or NaN
-            // row[column.key] === null || (isNaN(row[column.key]) && row[column.key].length === 0) ? "N/A" : row[column.key]
-        }
-        <td>
+        {tableLayout.map((column, i) => (
+            <td key={column.key} className="view-tables__cell">
+                {row.isEditing && column.editable ? (
+                    <input
+                        type={column.type === 'number' ? 'number' : 'text'}
+                        className="view-tables__input"
+                        value={row[column.key] || ""}
+                        onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
+                    />
+                ) : (
+                    row[column.key] === null || row[column.key] === undefined || row[column.key] === ""
+                        ? "N/A" // Handle null or missing values
+                        : row[column.key]
+                )}
+            </td>
+        ))}
+        <td className="view-tables__cell">
             <button
-                className={`btn ${row.isEditing ? 'btn-success' : 'btn-primary'}`}
+                className={`view-tables__button ${row.isEditing ? 'view-tables__button--save' : 'view-tables__button--edit'}`}
                 onClick={() => handleEditClick(rowIndex, !(row.isEditing))}
             >
                 {row.isEditing ? 'Save' : 'Edit'}
             </button>
         </td>
-        <td>
+        <td className="view-tables__cell">
             {row.isEditing && (
-                <button className="btn btn-danger" onClick={() => handleCancelClick(rowIndex)}>
+                <button className="view-tables__button view-tables__button--cancel" onClick={() => handleCancelClick(rowIndex)}>
                     Cancel
                 </button>
             )}
         </td>
-    </tr >
+    </tr>
 );
 
 // Table Component
@@ -76,25 +68,24 @@ const DataTable = ({
     tableLayout,
     params
 }) => (
-    <table className="table table-bordered">
-        <thead className="thead-dark">
-            <tr>
-                <th>ID</th>
+    <table className="view-tables__table">
+        <thead className="view-tables__header">
+            <tr className="view-tables__header-row">
+                <th className="view-tables__header-cell">ID</th>
                 {tableLayout.map((column) => (
-                    // <th key={column.key}>{column.label}</th>
                     <th
                         key={column.key}
+                        className="view-tables__header-cell view-tables__header-cell--sortable"
                         onClick={() => handleSort(column.key)}
-                        style={{ cursor: "pointer" }}
                     >
                         {column.label} {params.sort_by === column.key ? (params.sort_order === "asc" ? "↑" : "↓") : ""}
                     </th>
                 ))}
-                <th>Edit</th>
-                <th>Cancel</th>
+                <th className="view-tables__header-cell">Edit</th>
+                <th className="view-tables__header-cell">Cancel</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody className="view-tables__body">
             {data.map((row, rowIndex) => (
                 <DataRow
                     key={rowIndex}
@@ -111,19 +102,6 @@ const DataTable = ({
         </tbody>
     </table>
 );
-
-
-const handleRowHover = (rowIndex) => {
-    try {
-        console.log(`Row hovered: ${rowIndex}`);
-        setSelectedRowIndex(rowIndex);
-    } catch (err) {
-        console.error(`Error handling row hover for row: ${rowIndex}`, err);
-    }
-};
-
-let checked = false;
-
 
 const ViewTables = ({ tableName, initialParams = {} }) => {
     const [data, setData] = useState([]);
@@ -271,16 +249,20 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
     };
 
     return (
-        <div>
-            <h3>Viewing Table: {tableName}</h3>
-            {error && <div className="alert alert-danger">{error}</div>}
+        <div className="view-tables">
+            <h3 className="view-tables__title">Viewing Table: {tableName}</h3>
+            {error && <div className="view-tables__alert view-tables__alert--error">{error}</div>}
             {loading ? (
-                <div>Loading...</div>
+                <div className="view-tables__loading">Loading...</div>
             ) : (
                 <>
-                    <div className="mb-3">
-                        <label>Page Size: </label>
-                        <select value={params.page_size} onChange={handlePageSizeChange}>
+                    <div className="view-tables__controls">
+                        <label className="view-tables__label">Page Size: </label>
+                        <select
+                            className="view-tables__select"
+                            value={params.page_size}
+                            onChange={handlePageSizeChange}
+                        >
                             <option value={5}>5</option>
                             <option value={10}>10</option>
                             <option value={20}>20</option>
@@ -298,17 +280,17 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                         handleRowHover={handleRowHover}
                         selectedRowIndex={selectedRowIndex}
                     />
-                    <div className="d-flex justify-content-between align-items-center">
+                    <div className="view-tables__pagination">
                         <button
-                            className="btn btn-primary"
+                            className="view-tables__button view-tables__button--prev"
                             onClick={() => handlePageChange(params.page - 1)}
                             disabled={params.page === 1}
                         >
                             Previous
                         </button>
-                        <span>Page {params.page}</span>
+                        <span className="view-tables__pagination-info">Page {params.page}</span>
                         <button
-                            className="btn btn-primary"
+                            className="view-tables__button view-tables__button--next"
                             onClick={() => handlePageChange(params.page + 1)}
                             disabled={data.length < params.page_size}
                         >
