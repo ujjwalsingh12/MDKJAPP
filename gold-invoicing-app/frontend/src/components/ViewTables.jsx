@@ -2,11 +2,67 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchAll } from "../api/index";
 import { fetchTableSchema } from "../api/index"; // Import the function to fetch table schema
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+// import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
+import './ViewTables.css'; // Import custom CSS for styling
+// import { updateData } from "../api/index"; // Import the function to update data
 
 
 
+const DataRow = ({
+    row,
+    rowIndex,
+    handleCellChange,
+    handleEditClick,
+    handleCancelClick,
+    selectedRowIndex,
+    handleRowHover,
+    tableLayout
+}) => (
+    <tr
+        key={rowIndex}
+        className={selectedRowIndex === rowIndex ? 'table-active' : ''}
+        onMouseEnter={() => handleRowHover(rowIndex)}
+    >
+        <td></td>
+        {
+            tableLayout.map((column, i) => (
+                <td key={column.key}>
+                    {row.isEditing && column.editable ? (
+                        <input
+                            type={column.type === 'number' ? 'number' : 'text'}
+                            className="form-control"
+                            value={row[column.key] || ""}
+                            onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
+                        />
+                    ) : (
+                        row[column.key] === null || row[column.key] === undefined || row[column.key] === ""
+                            ? "N/A" // Handle null or missing values
+                            : row[column.key]
+                    )}
+                </td>
+            ))
+
+            // Display value or "N/A" if null or NaN
+            // row[column.key] === null || (isNaN(row[column.key]) && row[column.key].length === 0) ? "N/A" : row[column.key]
+        }
+        <td>
+            <button
+                className={`btn ${row.isEditing ? 'btn-success' : 'btn-primary'}`}
+                onClick={() => handleEditClick(rowIndex, !(row.isEditing))}
+            >
+                {row.isEditing ? 'Save' : 'Edit'}
+            </button>
+        </td>
+        <td>
+            {row.isEditing && (
+                <button className="btn btn-danger" onClick={() => handleCancelClick(rowIndex)}>
+                    Cancel
+                </button>
+            )}
+        </td>
+    </tr >
+);
 
 // Table Component
 const DataTable = ({
@@ -16,13 +72,22 @@ const DataTable = ({
     handleCancelClick,
     selectedRowIndex,
     handleRowHover,
+    tableLayout,
+    params
 }) => (
     <table className="table table-bordered">
         <thead className="thead-dark">
             <tr>
                 <th>ID</th>
                 {tableLayout.map((column) => (
-                    <th key={column.key}>{column.label}</th>
+                    // <th key={column.key}>{column.label}</th>
+                    <th
+                        key={column.key}
+                        onClick={() => handleSort(column.key)}
+                        style={{ cursor: "pointer" }}
+                    >
+                        {column.label} {params.sort_by === column.key ? (params.sort_order === "asc" ? "↑" : "↓") : ""}
+                    </th>
                 ))}
                 <th>Edit</th>
                 <th>Cancel</th>
@@ -39,6 +104,7 @@ const DataTable = ({
                     handleCancelClick={handleCancelClick}
                     selectedRowIndex={selectedRowIndex}
                     handleRowHover={handleRowHover}
+                    tableLayout={tableLayout} // Pass tableLayout
                 />
             ))}
         </tbody>
@@ -210,58 +276,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         }
     };
     // DataRow Component
-    const DataRow = ({
-        row,
-        rowIndex,
-        handleCellChange,
-        handleEditClick,
-        handleCancelClick,
-        selectedRowIndex,
-        handleRowHover,
-    }) => (
-        <tr
-            key={rowIndex}
-            className={selectedRowIndex === rowIndex ? 'table-active' : ''}
-            onMouseEnter={() => handleRowHover(rowIndex)}
-        >
-            {
-                tableLayout.map((column, i) => (
-                    <td key={column.key}>
-                        {row.isEditing && column.editable ? (
-                            <input
-                                type={column.type === 'number' ? 'number' : 'text'}
-                                className="form-control"
-                                value={row[column.key] || ""}
-                                onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
-                            />
-                        ) : (
-                            row[column.key] === null || row[column.key] === undefined || row[column.key] === ""
-                                ? "N/A" // Handle null or missing values
-                                : row[column.key]
-                        )}
-                    </td>
-                ))
 
-                // Display value or "N/A" if null or NaN
-                // row[column.key] === null || (isNaN(row[column.key]) && row[column.key].length === 0) ? "N/A" : row[column.key]
-            }
-            <td>
-                <button
-                    className={`btn ${row.isEditing ? 'btn-success' : 'btn-primary'}`}
-                    onClick={() => handleEditClick(rowIndex, !(row.isEditing))}
-                >
-                    {row.isEditing ? 'Save' : 'Edit'}
-                </button>
-            </td>
-            <td>
-                {row.isEditing && (
-                    <button className="btn btn-danger" onClick={() => handleCancelClick(rowIndex)}>
-                        Cancel
-                    </button>
-                )}
-            </td>
-        </tr >
-    );
 
 
     //----------------------------------------------------
@@ -283,7 +298,17 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                             <option value={50}>50</option>
                         </select>
                     </div>
-                    <table className="table table-bordered">
+                    <DataTable
+                        data={data}
+                        handleCellChange={handleCellChange}
+                        handleEditClick={handleEditClick}
+                        handleCancelClick={handleCancelClick}
+                        selectedRowIndex={selectedRowIndex}
+                        handleRowHover={handleRowHover}
+                        tableLayout={tableLayout}
+                        params={params} // Pass params to DataTable for sorting
+                    />
+                    {/* <table className="table table-bordered">
                         <thead>
                             <tr>
                                 {data.length > 0 &&
@@ -313,26 +338,10 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                                     />
                                 ))
 
-                                //         data.length > 0 ? (
-                                //     data.map((row, index) => (
-                                // <tr key={index}>
-                                //     {Object.values(row).map((value, i) => (
-                                //         <td key={i}>
-                                //             {value === null || (isNaN(value) && value.length == 0) ? "N/A" : value} {/* Handle null or NaN */}
-                                //         </td>
-                                //     ))}
-                                // </tr>
-                                //     ))
-                                // ) : (
-                                //     <tr>
-                                //         <td colSpan={data.length > 0 ? Object.keys(data[0]).length : 1} className="text-center">
-                                //             No data available
-                                //         </td>
-                                //     </tr>
-                                //     )
+
                             }
                         </tbody>
-                    </table>
+                    </table> */}
                     <div className="d-flex justify-content-between align-items-center">
                         <button
                             className="btn btn-primary"
