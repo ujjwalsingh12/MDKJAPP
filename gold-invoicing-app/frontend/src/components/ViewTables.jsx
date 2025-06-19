@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchAll } from "../api/index";
+import { fetchAll, updateRecord } from "../api/index"; // Import updateRecord
 import { fetchTableSchema } from "../api/index"; // Import the function to fetch table schema
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
@@ -11,6 +11,7 @@ const DataRow = ({
     rowIndex,
     handleCellChange,
     handleEditClick,
+    handleSaveClick,
     handleCancelClick,
     selectedRowIndex,
     handleRowHover,
@@ -29,7 +30,8 @@ const DataRow = ({
                         type={column.type === 'number' ? 'number' : 'text'}
                         className="view-tables__input"
                         value={row[column.key] || ""}
-                        onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
+                        // onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
+                        onChange={(e) => row[column.key] = e.target.value}
                     />
                 ) : (
                     row[column.key] === null || row[column.key] === undefined || row[column.key] === ""
@@ -41,7 +43,7 @@ const DataRow = ({
         <td className="view-tables__cell">
             <button
                 className={`view-tables__button ${row.isEditing ? 'view-tables__button--save' : 'view-tables__button--edit'}`}
-                onClick={() => handleEditClick(rowIndex, !(row.isEditing))}
+                onClick={() => row.isEditing ? handleSaveClick(rowIndex) : handleEditClick(rowIndex)}
             >
                 {row.isEditing ? 'Save' : 'Edit'}
             </button>
@@ -61,6 +63,7 @@ const DataTable = ({
     data,
     handleCellChange,
     handleEditClick,
+    handleSaveClick,
     handleCancelClick,
     selectedRowIndex,
     handleRowHover,
@@ -93,6 +96,7 @@ const DataTable = ({
                     rowIndex={rowIndex}
                     handleCellChange={handleCellChange}
                     handleEditClick={handleEditClick}
+                    handleSaveClick={handleSaveClick}
                     handleCancelClick={handleCancelClick}
                     selectedRowIndex={selectedRowIndex}
                     handleRowHover={handleRowHover}
@@ -200,13 +204,13 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
     };
 
     const handleCellChange = (rowIndex, columnKey, value) => {
-        const newData = [...data];
-        const snewData = [...sdata];
-        newData[rowIndex][columnKey] = value;
-        snewData[rowIndex][columnKey] = value;
-        delete snewData[rowIndex].isEditing;
-        setData(newData);
-        setsData(snewData);
+        // const newData = [...data];
+        // const snewData = [...sdata];
+        // data[rowIndex][columnKey] = value;
+        // snewData[rowIndex][columnKey] = value;
+        // delete snewData[rowIndex].isEditing;
+        // setData(newData);
+        // setsData(snewData);
     };
 
     const handleRowHover = (rowIndex) => {
@@ -217,34 +221,51 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         }
     };
 
-    const handleEditClick = (rowIndex, editing) => {
-        if (editing) {
-            const newData = [...data];
-            newData[rowIndex].isEditing = !newData[rowIndex].isEditing;
-            setData(newData);
-            if (newData[rowIndex].isEditing) {
-                newData[rowIndex].original = { ...newData[rowIndex] };
-            }
-        } else {
-            const row = data[rowIndex];
-            const srow = sdata[rowIndex];
-            updateData(srow)
-                .then(() => {
-                    const newData = [...data];
-                    newData[rowIndex].isEditing = false;
-                    setData(newData);
-                    fetchData();
-                })
-                .catch((error) => {
-                    console.error('Error updating row:', error);
-                });
+    // Dedicated function for handling save operation
+    const handleSaveClick = async (rowIndex) => {
+        const row = data[rowIndex];
+
+        try {
+            // Create a copy of the row data without the editing flags
+            const cleanRowData = row;
+            delete cleanRowData.isEditing;
+            delete cleanRowData.original;
+
+            // Call the updateRecord function with tableName and clean data
+            console.log('clean', cleanRowData);
+            await updateRecord(tableName, cleanRowData);
+
+            // Update the local state
+            // const newData = [...data];
+            data[rowIndex].isEditing = false;
+            // delete newData[rowIndex].original;
+            // setData(Data);
+
+            // Optionally refresh the data from server
+            await fetchData();
+
+            console.log('Record updated successfully');
+
+        } catch (error) {
+            console.error('Error updating row:', error);
+            setError('Failed to update record. Please try again.');
         }
+    };
+
+    // Function for handling edit button click (to enter edit mode)
+    const handleEditClick = (rowIndex) => {
+        setsData(data);
+        data[rowIndex].isEditing = true;
+        // Store original data for cancel functionality
+        // newData[rowIndex].original = { ...newData[rowIndex] };
+        // setData(newData);
     };
 
     const handleCancelClick = (rowIndex) => {
         const newData = [...data];
         newData[rowIndex] = { ...newData[rowIndex].original }; // Restore original data
         newData[rowIndex].isEditing = false; // Reset editing state
+        delete newData[rowIndex].original; // Clean up
         setData(newData);
     };
 
@@ -273,6 +294,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
                         data={data}
                         handleCellChange={handleCellChange}
                         handleEditClick={handleEditClick}
+                        handleSaveClick={handleSaveClick}
                         handleCancelClick={handleCancelClick}
                         tableLayout={tableLayout}
                         handleSort={handleSort}

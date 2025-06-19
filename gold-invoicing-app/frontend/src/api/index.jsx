@@ -51,8 +51,18 @@ export const fetchAllSanitized = async (table, params = {}) => {
 };
 
 // Update a record in a specified table
+// Update a journal entry
 export const updateRecord = (table, data) =>
-    axios.put(`${API_BASE}/${table}/update`, data);
-// Delete a record from a specified table
-export const deleteRecord = (table, id) =>
-    axios.delete(`${API_BASE}/${table}/delete/${id}`);  
+    axios.post(`${API_BASE}/queries/journal/update`, {
+        ...data,
+        entry_type: table,  // ensure the entry_type is passed based on table name
+        entry_id: data['id']
+    });
+
+// Delete a journal entry
+export const deleteRecord = (table, id, remark_text = null) =>
+    axios.post(`${API_BASE}/queries/journal/delete`, {
+        entry_type: table,
+        entry_id: id,
+        remark_text  // Optional, can be used for audit
+    });

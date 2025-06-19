@@ -4,6 +4,7 @@ import DataTable from '../components/DataTable';
 import ViewTables from '../components/ViewTables';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
+import CreateCustomer from '../components/CreateCustomer';
 
 export default function Accounts() {
     const [customers, setCustomers] = useState([]);
@@ -193,6 +194,7 @@ export default function Accounts() {
                     </>
                 )}
             </div>
+            <CreateCustomer />
         </div>
     );
 }

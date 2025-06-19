@@ -22,24 +22,24 @@ SET row_security = off;
 
 CREATE FUNCTION public.delete_cash_entry(p_id integer, p_gstin text, p_is_debit boolean) RETURNS void
     LANGUAGE plpgsql
-    AS $$
-DECLARE
-    deleted_amount NUMERIC;
-    is_bank_val BOOLEAN;
-BEGIN
-    SELECT amount, bank INTO deleted_amount, is_bank_val FROM cash WHERE id = p_id;
-
-    DELETE FROM cash WHERE id = p_id;
-
-    PERFORM log_journal_entry(
-        p_gstin := p_gstin,
-        p_entry_type := 'cash_delete',
-        p_is_debit := p_is_debit,
-        p_amount := deleted_amount,
-        p_linked_row_id := p_id::TEXT,
-        p_is_bank := is_bank_val
-    );
-END;
+    AS $$
+DECLARE
+    deleted_amount NUMERIC;
+    is_bank_val BOOLEAN;
+BEGIN
+    SELECT amount, bank INTO deleted_amount, is_bank_val FROM cash WHERE id = p_id;
+
+    DELETE FROM cash WHERE id = p_id;
+
+    PERFORM log_journal_entry(
+        p_gstin := p_gstin,
+        p_entry_type := 'cash_delete',
+        p_is_debit := p_is_debit,
+        p_amount := deleted_amount,
+        p_linked_row_id := p_id::TEXT,
+        p_is_bank := is_bank_val
+    );
+END;
 $$;
 
 
@@ -51,40 +51,111 @@ ALTER FUNCTION public.delete_cash_entry(p_id integer, p_gstin text, p_is_debit b
 
 CREATE FUNCTION public.log_journal_entry(p_gstin text, p_entry_type text, p_is_debit boolean, p_amount numeric DEFAULT NULL::numeric, p_remark_id text DEFAULT NULL::text, p_dated date DEFAULT CURRENT_DATE, p_linked_row_id text DEFAULT NULL::text, p_is_bank boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
-    AS $$
-DECLARE
-    actual_amount NUMERIC;
-BEGIN
-    -- If amount is not provided, try fetching from related table
-    IF p_amount IS NULL THEN
-        CASE p_entry_type
-            WHEN 'cash' THEN
-                SELECT amount INTO actual_amount FROM cash WHERE id = p_linked_row_id::INT;
-            WHEN 'stock' THEN
-                SELECT weight INTO actual_amount FROM stock WHERE id = p_linked_row_id::INT;
-            WHEN 'gold' THEN
-                SELECT weight INTO actual_amount FROM gold WHERE id = p_linked_row_id::INT;
-            WHEN 'bill' THEN
-                SELECT weight * rate INTO actual_amount FROM bill WHERE id = p_linked_row_id::INT;
-            ELSE
-                RAISE EXCEPTION 'Unknown entry_type or amount missing';
-        END CASE;
-    ELSE
-        actual_amount := p_amount;
-    END IF;
-
-    -- Insert into journal_entry
-    INSERT INTO journal_entry (
-        gstin, entry_type, amount, remark_id, dated, linked_row_id, is_bank, is_debit
-    )
-    VALUES (
-        p_gstin, p_entry_type, actual_amount, p_remark_id, p_dated, p_linked_row_id, p_is_bank, p_is_debit
-    );
-END;
+    AS $$
+DECLARE
+    actual_amount NUMERIC;
+BEGIN
+    -- If amount is not provided, try fetching from related table
+    IF p_amount IS NULL THEN
+        CASE p_entry_type
+            WHEN 'cash' THEN
+                SELECT amount INTO actual_amount FROM cash WHERE id = p_linked_row_id::INT;
+            WHEN 'stock' THEN
+                SELECT weight INTO actual_amount FROM stock WHERE id = p_linked_row_id::INT;
+            WHEN 'gold' THEN
+                SELECT weight INTO actual_amount FROM gold WHERE id = p_linked_row_id::INT;
+            WHEN 'bill' THEN
+                SELECT weight * rate INTO actual_amount FROM bill WHERE id = p_linked_row_id::INT;
+            ELSE
+                RAISE EXCEPTION 'Unknown entry_type or amount missing';
+        END CASE;
+    ELSE
+        actual_amount := p_amount;
+    END IF;
+
+    -- Insert into journal_entry
+    INSERT INTO journal_entry (
+        gstin, entry_type, amount, remark_id, dated, linked_row_id, is_bank, is_debit
+    )
+    VALUES (
+        p_gstin, p_entry_type, actual_amount, p_remark_id, p_dated, p_linked_row_id, p_is_bank, p_is_debit
+    );
+END;
 $$;
 
 
 ALTER FUNCTION public.log_journal_entry(p_gstin text, p_entry_type text, p_is_debit boolean, p_amount numeric, p_remark_id text, p_dated date, p_linked_row_id text, p_is_bank boolean) OWNER TO postgres;
+
+--
+-- Name: unified_delete_journal_entry(character varying, integer, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.unified_delete_journal_entry(p_entry_type character varying, p_entry_id integer, p_remark_text text DEFAULT NULL::text) RETURNS TABLE(journal_ts timestamp without time zone, returned_entry_type character varying, returned_entry_id integer, returned_amount numeric, returned_remark_id integer, returned_is_debit boolean)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_amount NUMERIC;
+    v_is_debit BOOLEAN;
+    v_gstin VARCHAR;
+    v_bank BOOLEAN;
+    v_dated DATE;
+BEGIN
+    -- Normalize entry type
+    p_entry_type := LOWER(TRIM(p_entry_type));
+
+    -- Validation
+    IF p_entry_type IS NULL OR p_entry_id IS NULL THEN
+        RAISE EXCEPTION 'entry_type and entry_id are required';
+    END IF;
+
+    -- Fetch related data for journal logging before deletion
+    CASE p_entry_type
+        WHEN 'bill' THEN
+            SELECT gstin, wt * rate, is_debit, bank, dated INTO v_gstin, v_amount, v_is_debit, v_bank, v_dated
+            FROM bill WHERE id = p_entry_id;
+
+            DELETE FROM bill WHERE id = p_entry_id;
+
+        WHEN 'cash' THEN
+            SELECT gstin, cash_amount, is_debit, bank, dated INTO v_gstin, v_amount, v_is_debit, v_bank, v_dated
+            FROM cash WHERE id = p_entry_id;
+
+            DELETE FROM cash WHERE id = p_entry_id;
+
+        WHEN 'stock' THEN
+            SELECT gstin, weight, is_debit, bank, dated INTO v_gstin, v_amount, v_is_debit, v_bank, v_dated
+            FROM stock WHERE id = p_entry_id;
+
+            DELETE FROM stock WHERE id = p_entry_id;
+
+        WHEN 'gold' THEN
+            SELECT gstin, weight, is_debit, is_bank, dated INTO v_gstin, v_amount, v_is_debit, v_bank, v_dated
+            FROM gold WHERE id = p_entry_id;
+
+            DELETE FROM gold WHERE id = p_entry_id;
+
+        ELSE
+            RAISE EXCEPTION 'Unsupported entry_type for deletion: %', p_entry_type;
+    END CASE;
+
+    -- Insert into journal for deletion logging
+    INSERT INTO journal (
+        gstin, entry_type, entry_id,
+        amount, dated, bank, remark_id, is_debit
+    ) VALUES (
+        v_gstin, p_entry_type, p_entry_id,
+        v_amount, v_dated, v_bank, NULL, v_is_debit
+    )
+    RETURNING id AS journal_ts, entry_type, entry_id, amount, remark_id, is_debit
+    INTO journal_ts, returned_entry_type, returned_entry_id,
+         returned_amount, returned_remark_id, returned_is_debit;
+
+    RETURN NEXT;
+END;
+$$;
+
+
+ALTER FUNCTION public.unified_delete_journal_entry(p_entry_type character varying, p_entry_id integer, p_remark_text text) OWNER TO postgres;
 
 --
 -- Name: unified_insert_journal_entry(character varying, character varying, boolean, date, boolean, text, text, text, numeric, numeric, numeric, numeric, numeric, numeric, numeric); Type: FUNCTION; Schema: public; Owner: postgres
@@ -279,7 +350,7 @@ BEGIN
             amount, dated, bank, remark_id, is_debit
         )
         VALUES (
-            NOW(), p_gstin, p_entry_type, v_entry_id,
+            NOW()+(random() * interval '1 millisecond'), p_gstin, p_entry_type, v_entry_id,
             v_amount, p_dated, p_bank, v_remark, p_is_debit
         )
         RETURNING
@@ -322,26 +393,153 @@ $$;
 ALTER FUNCTION public.unified_insert_journal_entry(p_entry_type character varying, p_gstin character varying, p_is_debit boolean, p_dated date, p_bank boolean, p_remark_text text, p_bill_no text, p_purity text, p_wt numeric, p_rate numeric, p_cgst numeric, p_sgst numeric, p_igst numeric, p_weight numeric, p_cash_amount numeric) OWNER TO postgres;
 
 --
+-- Name: unified_update_journal_entry(character varying, integer, boolean, date, boolean, text, text, text, numeric, numeric, numeric, numeric, numeric, numeric, numeric, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.unified_update_journal_entry(p_entry_type character varying, p_entry_id integer, p_is_debit boolean DEFAULT NULL::boolean, p_dated date DEFAULT NULL::date, p_bank boolean DEFAULT NULL::boolean, p_remark_text text DEFAULT NULL::text, p_bill_no text DEFAULT NULL::text, p_purity text DEFAULT NULL::text, p_wt numeric DEFAULT NULL::numeric, p_rate numeric DEFAULT NULL::numeric, p_cgst numeric DEFAULT NULL::numeric, p_sgst numeric DEFAULT NULL::numeric, p_igst numeric DEFAULT NULL::numeric, p_weight numeric DEFAULT NULL::numeric, p_cash_amount numeric DEFAULT NULL::numeric, p_gstin character varying DEFAULT NULL::character varying) RETURNS TABLE(journal_ts timestamp without time zone, returned_entry_type character varying, returned_entry_id integer, returned_amount numeric, returned_remark_id integer, returned_is_debit boolean)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_amount       NUMERIC;
+    v_remark_id    INTEGER;
+    v_bill_wt      NUMERIC;
+    v_bill_rate    NUMERIC;
+    v_existing_gstin VARCHAR;
+    v_existing_is_debit BOOLEAN;
+    v_existing_dated DATE;
+    v_existing_bank BOOLEAN;
+BEGIN
+    -- Normalize entry_type
+    p_entry_type := LOWER(TRIM(p_entry_type));
+
+    -- Validate minimum required
+    IF p_entry_type IS NULL OR p_entry_id IS NULL THEN
+        RAISE EXCEPTION 'entry_type and entry_id are required';
+    END IF;
+
+    -- Optional remark insert
+    IF p_remark_text IS NOT NULL AND LENGTH(TRIM(p_remark_text)) > 0 THEN
+        INSERT INTO remarks(gstin, remark)
+        VALUES (COALESCE(p_gstin, ''), p_remark_text)
+        RETURNING remark_id INTO v_remark_id;
+    END IF;
+
+    -- Handle entry-specific update
+    CASE p_entry_type
+        WHEN 'bill' THEN
+            SELECT gstin, is_debit, dated, bank, wt, rate
+            INTO v_existing_gstin, v_existing_is_debit, v_existing_dated, v_existing_bank, v_bill_wt, v_bill_rate
+            FROM bill WHERE id = p_entry_id;
+
+            UPDATE bill
+            SET bill_no = COALESCE(p_bill_no, bill_no),
+                purity = COALESCE(p_purity, purity),
+                wt     = COALESCE(p_wt, wt),
+                rate   = COALESCE(p_rate, rate),
+                cgst   = COALESCE(p_cgst, cgst),
+                sgst   = COALESCE(p_sgst, sgst),
+                igst   = COALESCE(p_igst, igst),
+                dated  = COALESCE(p_dated, dated),
+                bank   = COALESCE(p_bank, bank)
+            WHERE id = p_entry_id;
+
+            v_amount := COALESCE(p_wt, v_bill_wt) * COALESCE(p_rate, v_bill_rate);
+
+        WHEN 'cash' THEN
+            SELECT gstin, is_debit, dated, bank
+            INTO v_existing_gstin, v_existing_is_debit, v_existing_dated, v_existing_bank
+            FROM cash WHERE id = p_entry_id;
+
+            UPDATE cash
+            SET cash_amount = COALESCE(p_cash_amount, cash_amount),
+                dated       = COALESCE(p_dated, dated),
+                bank        = COALESCE(p_bank, bank)
+            WHERE id = p_entry_id;
+
+            v_amount := COALESCE(p_cash_amount, 0);
+
+        WHEN 'stock' THEN
+            SELECT gstin, is_debit, dated, bank
+            INTO v_existing_gstin, v_existing_is_debit, v_existing_dated, v_existing_bank
+            FROM stock WHERE id = p_entry_id;
+
+            UPDATE stock
+            SET purity = COALESCE(p_purity, purity),
+                weight = COALESCE(p_weight, weight),
+                dated  = COALESCE(p_dated, dated),
+                bank   = COALESCE(p_bank, bank)
+            WHERE id = p_entry_id;
+
+            v_amount := COALESCE(p_weight, 0);
+
+        WHEN 'gold' THEN
+            SELECT gstin, is_debit, dated, is_bank
+            INTO v_existing_gstin, v_existing_is_debit, v_existing_dated, v_existing_bank
+            FROM gold WHERE id = p_entry_id;
+
+            UPDATE gold
+            SET purity  = COALESCE(p_purity, purity),
+                weight  = COALESCE(p_weight, weight),
+                dated   = COALESCE(p_dated, dated),
+                is_bank = COALESCE(p_bank, is_bank)
+            WHERE id = p_entry_id;
+
+            v_amount := COALESCE(p_weight, 0);
+
+        WHEN 'remarks' THEN
+            RAISE EXCEPTION 'remarks entries are immutable and cannot be updated';
+
+        ELSE
+            RAISE EXCEPTION 'Unsupported entry_type: %', p_entry_type;
+    END CASE;
+
+    -- Final fallback for values not passed in
+    p_is_debit := COALESCE(p_is_debit, v_existing_is_debit);
+    p_gstin    := COALESCE(p_gstin, v_existing_gstin);
+    p_dated    := COALESCE(p_dated, v_existing_dated);
+    p_bank     := COALESCE(p_bank, v_existing_bank);
+
+    -- Journal insert
+    INSERT INTO journal (
+        gstin, entry_type, entry_id,
+        amount, dated, bank, remark_id, is_debit
+    )
+    VALUES (
+        p_gstin, p_entry_type, p_entry_id,
+        v_amount, p_dated, p_bank, v_remark_id, p_is_debit
+    )
+    RETURNING id AS journal_ts, entry_type, entry_id, amount, remark_id, is_debit
+    INTO journal_ts, returned_entry_type, returned_entry_id,
+         returned_amount, returned_remark_id, returned_is_debit;
+
+    RETURN NEXT;
+END;
+$$;
+
+
+ALTER FUNCTION public.unified_update_journal_entry(p_entry_type character varying, p_entry_id integer, p_is_debit boolean, p_dated date, p_bank boolean, p_remark_text text, p_bill_no text, p_purity text, p_wt numeric, p_rate numeric, p_cgst numeric, p_sgst numeric, p_igst numeric, p_weight numeric, p_cash_amount numeric, p_gstin character varying) OWNER TO postgres;
+
+--
 -- Name: update_cash_entry(integer, numeric, boolean, text, boolean); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.update_cash_entry(p_id integer, p_amount numeric, p_is_bank boolean, p_gstin text, p_is_debit boolean) RETURNS void
     LANGUAGE plpgsql
-    AS $$
-BEGIN
-    UPDATE cash
-    SET amount = p_amount, bank = p_is_bank, is_debit = p_is_debit
-    WHERE id = p_id;
-
-    PERFORM log_journal_entry(
-        p_gstin := p_gstin,
-        p_entry_type := 'cash',
-        p_is_debit := p_is_debit,
-        p_amount := p_amount,
-        p_linked_row_id := p_id::TEXT,
-        p_is_bank := p_is_bank
-    );
-END;
+    AS $$
+BEGIN
+    UPDATE cash
+    SET amount = p_amount, bank = p_is_bank, is_debit = p_is_debit
+    WHERE id = p_id;
+
+    PERFORM log_journal_entry(
+        p_gstin := p_gstin,
+        p_entry_type := 'cash',
+        p_is_debit := p_is_debit,
+        p_amount := p_amount,
+        p_linked_row_id := p_id::TEXT,
+        p_is_bank := p_is_bank
+    );
+END;
 $$;
 
 
@@ -408,7 +606,7 @@ CREATE TABLE public.cash (
     gstin character varying(15) NOT NULL,
     amount numeric(12,2) DEFAULT 0,
     bank boolean DEFAULT false,
-    is_debit boolean DEFAULT NULL
+    is_debit boolean
 );
 
 
@@ -443,9 +641,9 @@ ALTER SEQUENCE public.cash_id_seq OWNED BY public.cash.id;
 CREATE TABLE public.customer_details (
     gstin character varying(15) NOT NULL,
     name character varying(100) NOT NULL,
-    address text DEFAULT NULL,
-    phone character varying(15) DEFAULT NULL,
-    email character varying(100) DEFAULT NULL
+    address text,
+    phone character varying(15) DEFAULT NULL::character varying,
+    email character varying(100) DEFAULT NULL::character varying
 );
 
 
@@ -462,7 +660,7 @@ CREATE TABLE public.gold (
     purity text NOT NULL,
     weight numeric DEFAULT 0,
     is_bank boolean DEFAULT false,
-    is_debit boolean DEFAULT NULL
+    is_debit boolean
 );
 
 
@@ -499,11 +697,11 @@ CREATE TABLE public.journal (
     gstin character varying(15) NOT NULL,
     entry_type character varying(20) NOT NULL,
     amount numeric(12,2) DEFAULT 0,
-    remark_id integer DEFAULT NULL,
+    remark_id integer,
     dated date DEFAULT CURRENT_DATE,
     bank boolean DEFAULT false,
-    entry_id integer DEFAULT NULL,
-    is_debit boolean DEFAULT NULL,
+    entry_id integer,
+    is_debit boolean,
     CONSTRAINT journal_entry_type_check CHECK (((entry_type)::text = ANY (ARRAY[('stock'::character varying)::text, ('gold'::character varying)::text, ('bill'::character varying)::text, ('remarks'::character varying)::text, ('cash'::character varying)::text])))
 );
 
@@ -575,7 +773,7 @@ CREATE TABLE public.stock (
     purity character varying(10) DEFAULT '75ct'::character varying NOT NULL,
     weight numeric(10,3) DEFAULT 0 NOT NULL,
     bank boolean DEFAULT false,
-    is_debit boolean DEFAULT NULL
+    is_debit boolean
 );
 
 
@@ -643,8 +841,6 @@ ALTER TABLE ONLY public.stock ALTER COLUMN id SET DEFAULT nextval('public.stock_
 --
 
 COPY public.bill (id, bill_no, gstin, purity, wt, rate, cgst_rate, sgst_rate, igst_rate, dated, bank, cgst, sgst, igst, is_debit) FROM stdin;
-11	BILL-011	GSTIN003	22	4.500	6150.00	0.00	0.00	0.00	2025-06-12	f	0	0	0	\N
-12	BILL-012	GSTIN004	22	6.000	6200.00	0.00	0.00	0.00	2025-06-13	f	0	0	0	\N
 13	BILL-013	GSTIN005	20	8.000	6000.00	0.00	0.00	0.00	2025-06-14	f	0	0	0	\N
 14	BILL-014	GSTIN006	18	3.000	5950.00	0.00	0.00	0.00	2025-06-15	t	0	0	0	\N
 15	BILL-015	GSTIN007	24	7.500	6300.00	0.00	0.00	0.00	2025-06-16	f	0	0	0	\N
@@ -655,6 +851,16 @@ COPY public.bill (id, bill_no, gstin, purity, wt, rate, cgst_rate, sgst_rate, ig
 20	BILL105	GSTIN008	18K	7.000	4800.00	0.00	0.00	0.00	2025-06-18	f	0	0	0	\N
 21	BILL106	GSTIN002	20K	9.500	5100.00	0.00	0.00	0.00	2025-06-22	t	0	0	0	\N
 22	BILL107	GSTIN006	22K	2.800	5200.00	0.00	0.00	0.00	2025-06-26	f	0	0	0	\N
+23	BILL1001	GSTIN001	22CT	10.500	5400.00	0.00	0.00	0.00	2025-06-17	f	0	0	0	t
+24	BILL1001	GSTIN001	22CT	12.300	5400.00	0.00	0.00	0.00	2025-06-17	f	0	0	0	t
+25	BILL1002	GSTIN002	18CT	5.000	5100.00	0.00	0.00	0.00	2025-06-16	t	0	0	0	f
+26	BILL1003	GSTIN010	22CT	7.500	5300.00	0.00	0.00	0.00	2025-06-07	f	0	0	0	t
+27	BILL1001	GSTIN001	22CT	12.300	5400.00	0.00	0.00	0.00	2025-06-17	f	0	0	0	t
+28	BILL1002	GSTIN002	18CT	5.000	5100.00	0.00	0.00	0.00	2025-06-16	t	0	0	0	f
+29	BILL1003	GSTIN010	22CT	7.500	5300.00	0.00	0.00	0.00	2025-06-07	f	0	0	0	t
+30	BILL-354913	GSTIN001	18 CT	10.000	7200.00	0.00	0.00	0.00	2025-06-18	f	0	0	0	t
+32	BILL-009	GSTIN002	22K	5.000	4800.00	0.00	0.00	0.00	2025-06-19	f	0	0	0	f
+11	BILL-011	GSTIN003	22	10.000	5000.00	0.00	0.00	0.00	2025-06-19	f	0	0	0	\N
 \.
 
 
@@ -674,6 +880,12 @@ COPY public.cash (id, dated, gstin, amount, bank, is_debit) FROM stdin;
 19	2025-06-16	GSTIN006	3000.00	t	\N
 20	2025-06-21	GSTIN001	2000.00	f	\N
 21	2025-06-27	GSTIN007	4000.00	f	\N
+22	2025-06-15	GSTIN003	250000.00	f	t
+23	2025-06-14	GSTIN001	100000.00	t	f
+26	2025-06-15	GSTIN003	250000.00	f	t
+27	2025-06-14	GSTIN001	100000.00	t	f
+29	2025-06-17	GSTIN001	100000.00	f	t
+31	2025-06-19	GSTIN001	2500.00	f	t
 \.
 
 
@@ -700,6 +912,11 @@ GSTIN010	Zaveri Bazaar	\N	9556677880	zaveribazaar@example.com
 --
 
 COPY public.gold (id, dated, gstin, purity, weight, is_bank, is_debit) FROM stdin;
+1	2025-06-11	GSTIN006	24CT	25.0	f	t
+2	2025-06-10	GSTIN007	22CT	15.75	f	f
+4	2025-06-11	GSTIN006	24CT	25.0	f	t
+5	2025-06-10	GSTIN007	22CT	15.75	f	f
+6	2025-06-16	GSTIN002	18CT	200.56	f	f
 \.
 
 
@@ -733,6 +950,38 @@ COPY public.journal (id, gstin, entry_type, amount, remark_id, dated, bank, entr
 2025-06-16 16:13:19.339364	GSTIN007	cash	4000.00	87	2025-06-27	f	21	\N
 2025-06-16 16:13:19.340343	GSTIN008	stock	135.00	88	2025-06-28	t	41	\N
 2025-06-16 16:13:19.341203	GSTIN009	gold	70.00	89	2025-06-29	f	42	\N
+2025-06-17 18:48:15.294217	GSTIN001	bill	56700.00	91	2025-06-17	f	23	t
+2025-06-17 18:48:59.680994	GSTIN001	bill	66420.00	92	2025-06-17	f	24	t
+2025-06-17 18:48:59.68861	GSTIN002	bill	25500.00	93	2025-06-16	t	25	f
+2025-06-17 18:48:59.690715	GSTIN003	cash	250000.00	\N	2025-06-15	f	22	t
+2025-06-17 18:48:59.696229	GSTIN001	cash	100000.00	\N	2025-06-14	t	23	f
+2025-06-17 18:48:59.698169	GSTIN004	stock	30.00	94	2025-06-13	f	45	t
+2025-06-17 18:48:59.704751	GSTIN005	stock	50.50	\N	2025-06-12	t	46	f
+2025-06-17 18:48:59.70804	GSTIN006	gold	25.00	95	2025-06-11	f	1	t
+2025-06-17 18:48:59.713148	GSTIN007	gold	15.75	\N	2025-06-10	f	2	f
+2025-06-17 18:48:59.714256	GSTIN008	remarks	\N	96	2025-06-09	f	96	t
+2025-06-17 18:48:59.715978	GSTIN009	remarks	\N	97	2025-06-08	f	97	f
+2025-06-17 18:48:59.716841	GSTIN010	bill	39750.00	\N	2025-06-07	f	26	t
+2025-06-17 18:49:23.288406	GSTIN001	bill	66420.00	102	2025-06-17	f	27	t
+2025-06-17 18:49:23.293174	GSTIN002	bill	25500.00	103	2025-06-16	t	28	f
+2025-06-17 18:49:23.296111	GSTIN003	cash	250000.00	\N	2025-06-15	f	26	t
+2025-06-17 18:49:44.31675	GSTIN001	cash	100000.00	\N	2025-06-14	t	27	f
+2025-06-17 18:49:44.33247	GSTIN004	stock	30.00	104	2025-06-13	f	49	t
+2025-06-17 18:49:44.337183	GSTIN005	stock	50.50	\N	2025-06-12	t	50	f
+2025-06-17 18:49:44.338437	GSTIN006	gold	25.00	105	2025-06-11	f	4	t
+2025-06-17 18:50:04.376758	GSTIN007	gold	15.75	\N	2025-06-10	f	5	f
+2025-06-17 18:50:04.382762	GSTIN008	remarks	\N	106	2025-06-09	f	106	t
+2025-06-17 18:50:04.385143	GSTIN009	remarks	\N	107	2025-06-08	f	107	f
+2025-06-17 18:50:04.387037	GSTIN010	bill	39750.00	\N	2025-06-07	f	29	t
+2025-06-17 20:54:43.34681	GSTIN001	stock	11.00	\N	2025-06-17	f	52	t
+2025-06-18 07:22:54.950549	GSTIN001	bill	72000.00	\N	2025-06-18	f	30	t
+2025-06-18 13:56:51.620737	GSTIN001	cash	100000.00	\N	2025-06-17	f	29	t
+2025-06-18 13:58:43.80967	GSTIN002	gold	200.56	\N	2025-06-16	f	6	f
+2025-06-19 13:52:59.773617	GSTIN001	cash	2500.00	\N	2025-06-19	f	31	t
+2025-06-19 13:52:59.774372	GSTIN002	bill	24000.00	\N	2025-06-19	f	32	f
+2025-06-19 14:31:48.662509	GSTIN001	bill	50000.00	109	2025-06-19	f	11	t
+2025-06-19 14:40:18.807132	GSTIN001	bill	50000.00	110	2025-06-19	f	11	t
+2025-06-19 14:51:30.070099	GSTIN004	bill	37200.00	\N	2025-06-13	f	12	\N
 \.
 
 
@@ -779,6 +1028,21 @@ COPY public.remarks (remark_id, gstin, remark) FROM stdin;
 88	GSTIN008	Excess inventory
 89	GSTIN009	Customer deposit
 90	GSTIN010	Final remark test
+91	GSTIN001	Invoice for customer A
+92	GSTIN001	Customer A invoice
+93	GSTIN002	Returned goods
+94	GSTIN004	New stock added
+95	GSTIN006	Melted gold
+96	GSTIN008	Year-end adjustment
+97	GSTIN009	Correcting stock mismatch
+102	GSTIN001	Customer A invoice
+103	GSTIN002	Returned goods
+104	GSTIN004	New stock added
+105	GSTIN006	Melted gold
+106	GSTIN008	Year-end adjustment
+107	GSTIN009	Correcting stock mismatch
+109	GSTIN001	Corrected weight and rate
+110	GSTIN001	Corrected weight and rate
 \.
 
 
@@ -809,6 +1073,11 @@ COPY public.stock (id, dated, gstin, purity, weight, bank, is_debit) FROM stdin;
 40	2025-06-24	GSTIN004	19K	60.000	t	\N
 41	2025-06-28	GSTIN008	21K	135.000	t	\N
 42	2025-06-29	GSTIN009	24K	70.000	f	\N
+45	2025-06-13	GSTIN004	24CT	30.000	f	t
+46	2025-06-12	GSTIN005	22CT	50.500	t	f
+49	2025-06-13	GSTIN004	24CT	30.000	f	t
+50	2025-06-12	GSTIN005	22CT	50.500	t	f
+52	2025-06-17	GSTIN001	18CT	11.000	f	t
 \.
 
 
@@ -816,35 +1085,35 @@ COPY public.stock (id, dated, gstin, purity, weight, bank, is_debit) FROM stdin;
 -- Name: bill_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.bill_id_seq', 22, true);
+SELECT pg_catalog.setval('public.bill_id_seq', 32, true);
 
 
 --
 -- Name: cash_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.cash_id_seq', 21, true);
+SELECT pg_catalog.setval('public.cash_id_seq', 31, true);
 
 
 --
 -- Name: gold_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.gold_id_seq', 1, false);
+SELECT pg_catalog.setval('public.gold_id_seq', 6, true);
 
 
 --
 -- Name: remarks_remark_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.remarks_remark_id_seq', 90, true);
+SELECT pg_catalog.setval('public.remarks_remark_id_seq', 111, true);
 
 
 --
 -- Name: stock_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.stock_id_seq', 44, true);
+SELECT pg_catalog.setval('public.stock_id_seq', 52, true);
 
 
 --
