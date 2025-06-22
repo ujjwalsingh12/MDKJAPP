@@ -4,6 +4,8 @@
 }
 
 /* Dark mode styles */
+
+
 .bg-dark {
     background-color: #343a40 !important;
 }
@@ -70,6 +72,16 @@ body.dark-mode .text-white {
 
 .navbar-nav .nav-link {
     padding: 0.5rem 1rem;
+}
+
+@media print {
+    nav {
+        display: none;
+    }
+
+    .container-fluid {
+        display: none;
+    }
 }
 
 /*

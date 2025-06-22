@@ -96,6 +96,35 @@ const CreateBill = () => {
   // --- Ref for the bill preview ---
   const billRef = useRef();
 
+  const hallmarking_jax = (hallmarkingPieces, hallmarkingCharges) => {
+    return (
+
+
+      <tr>
+        <td className="create-bill__table-cell create-bill__table-cell--center"></td>
+
+        <td className="create-bill__table-cell">
+          {hallmarkingPieces > 0 ? "Hallmarking Charges" : ""}
+        </td>
+
+        <td className="create-bill__table-cell create-bill__table-cell--center"></td>
+
+        <td className="create-bill__table-cell create-bill__table-cell--center"></td>
+
+        <td className="create-bill__table-cell create-bill__table-cell--center">
+          {hallmarkingPieces > 0 ? `${hallmarkingPieces} Pieces` : ""}
+        </td>
+
+        <td className="create-bill__table-cell create-bill__table-cell--center">
+          {hallmarkingPieces > 0 ? hallmarkingCharges.toFixed(2) : ""}
+        </td>
+
+        <td className="create-bill__table-cell create-bill__table-cell--center">
+          {hallmarkingPieces > 0 ? (hallmarkingPieces * hallmarkingCharges).toFixed(2) : ""}
+        </td>
+      </tr>
+    )
+  }
 
   // --- Memoized calculations for totals ---
   const calculations = useMemo(() => {
@@ -231,12 +260,16 @@ const CreateBill = () => {
 
     printWindow.document.write(`
       <html>
-        <head>
-          <title>Print Bill - ${billHeader.billNumber}</title>
-          <link rel="stylesheet" type="text/css" href="src/components/CreateBill.css">
-        </head>
-        <body>${printContent}</body>
-      </html>
+    <head>
+      <title>Print Bill - ${billHeader.billNumber}</title>
+      </head>
+      <style>
+     
+      </style>
+      
+    
+    <body>${printContent}</body>
+  </html>
     `);
 
     printWindow.document.close();
@@ -272,10 +305,9 @@ const CreateBill = () => {
   };
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} >
       {/* --- Customer Details Section --- */}
-      // --- Customer Details Section ---
-      <div className="create-bill__header-section">
+      <div className="create-bill__header-section print-hide">
         <h2 className="create-bill__header-title">Customer Information</h2>
         <div className="create-bill__form-grid">
           {/* Customer Name with Search */}
@@ -370,7 +402,7 @@ const CreateBill = () => {
           <h1 className="bill-title">INVOICE</h1>
           <h2 className="bill-subtitle">{storeInfo.storeName}</h2>
           <div className="bill-store-address">
-            {storeInfo.storeAddress.split('\n').map((line, i) => (
+            {storeInfo.storeAddress.split('|').map((line, i) => (
               <p key={i} className="bill-store-address-line">{line}</p>
             ))}
           </div>
@@ -413,11 +445,11 @@ const CreateBill = () => {
             {items.map((item, rowIndex) => (
               <tr
                 key={item.id}
-                className={`create-bill__table-row ${selectedRowIndex === rowIndex ? 'create-bill__table-row--highlight' : ''}`}
+                className={`create-bill__table-row ${selectedRowIndex === rowIndex ? 'create-bill__table-row--highlight' : ''} ${item.isEditing === true ? 'create-bill__is-editing' : ''}`}
                 onMouseEnter={() => setSelectedRowIndex(rowIndex)}
                 onMouseLeave={() => setSelectedRowIndex(null)}
               >
-                <td className="create-bill__table-cell create-bill__table-cell--center create-bill__table-cell--bold">
+                <td className="create-bill__table-cell create-bill__table-cell--center create-bill__table-cell--bold ">
                   {rowIndex + 1}
                 </td>
                 <td className="create-bill__table-cell">
@@ -563,11 +595,14 @@ const CreateBill = () => {
                 </td>
               </tr>
             ))}
+            {hallmarkingPieces > 0 ?
+              hallmarking_jax(hallmarkingPieces, hallmarkingCharges) : ""
+            }
           </tbody>
         </table>
         <div>
 
-          <div className='controlStyle'>
+          <div className='controlStyle print-hide'>
             <button
               style={{ ...buttonStyle, backgroundColor: '#28a745', color: 'white', fontSize: '16px', padding: '12px 24px' }}
               onClick={handleAddRow}
@@ -578,273 +613,254 @@ const CreateBill = () => {
           </div>
 
           {/* Totals Section */}
-          <div style={{ width: '400px', marginLeft: 'auto', marginTop: '30px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <tbody>
-                <tr>
-                  <td style={{ padding: '8px', fontWeight: 'bold', backgroundColor: '#f5f5f5', border: '1px solid #333' }}>
-                    Total Taxable
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', backgroundColor: '#f5f5f5', border: '1px solid #333' }}>
-                    ₹{parseFloat(calculations.totalTaxable).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333' }}>
-                    CGST {cgstRate}%
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    ₹{parseFloat(calculations.cgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333' }}>
-                    SGST {sgstRate}%
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    ₹{parseFloat(calculations.sgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333' }}>
-                    IGST {igstRate}%
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    ₹{parseFloat(calculations.igstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333' }}>
-                    Hallmarking Charges 9983 @ ₹{hallmarkingCharges.toFixed(2)}<br />
-                    <small>
-                      Pieces:
-                      <input
-                        type="number"
-                        style={{ ...inputStyle, width: '60px', marginLeft: '10px' }}
-                        value={hallmarkingPieces}
-                        onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
-                        min="0"
-                        step="1"
-                      />
-                    </small>
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
-                    CGST {hallmarkingCgst}%
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    ₹{parseFloat(calculations.hallmarkingCgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
-                    SGST {hallmarkingSgst}%
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    ₹{parseFloat(calculations.hallmarkingSgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333', paddingLeft: '20px' }}>
-                    IGST 0.0%
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    ₹0.00
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '8px', border: '1px solid #333' }}>
-                    Round off
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'right', border: '1px solid #333' }}>
-                    {parseFloat(calculations.roundOff) >= 0 ? '+' : ''}₹{calculations.roundOff}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '12px', fontWeight: 'bold', fontSize: '18px', backgroundColor: '#f0f0f0', border: '2px solid #333' }}>
-                    Grand Total
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold', fontSize: '18px', backgroundColor: '#f0f0f0', border: '2px solid #333' }}>
-                    ₹{parseFloat(calculations.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div style={{ display: 'flex', 'justify-content': 'flex-end', 'align-items': 'flex-start', gap: '20px' }}>
+            <div style={{ 'flex-grow': 1 }}>
+              <p>
 
+              </p>
+            </div>
+
+            <div className="bill-totals-container">
+              <table className="bill-totals-table">
+                <tbody>
+                  <tr>
+                    <td className="bill-totals-label bold-cell shaded-cell">
+                      Total Taxable
+                    </td>
+                    <td className="bill-totals-value bold-cell shaded-cell right-align">
+                      ₹{parseFloat(calculations.totalTaxable).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label">CGST {cgstRate}%</td>
+                    <td className="bill-totals-value right-align">
+                      ₹{parseFloat(calculations.cgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label">SGST {sgstRate}%</td>
+                    <td className="bill-totals-value right-align">
+                      ₹{parseFloat(calculations.sgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label">IGST {igstRate}%</td>
+                    <td className="bill-totals-value right-align">
+                      ₹{parseFloat(calculations.igstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label">
+                      Hallmarking Charges
+                    </td>
+                    <td id='hallmarking_total' className="bill-totals-value right-align">
+                      ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label indent">CGST {hallmarkingCgst}%</td>
+                    <td className="bill-totals-value right-align">
+                      ₹{parseFloat(calculations.hallmarkingCgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label indent">SGST {hallmarkingSgst}%</td>
+                    <td className="bill-totals-value right-align">
+                      ₹{parseFloat(calculations.hallmarkingSgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label indent">IGST 0.0%</td>
+                    <td className="bill-totals-value right-align">₹0.00</td>
+                  </tr>
+                  <tr>
+                    <td className="bill-totals-label">Round off</td>
+                    <td className="bill-totals-value right-align">
+                      {parseFloat(calculations.roundOff) >= 0 ? '+' : ''}₹{calculations.roundOff}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="grand-total-label">Grand Total</td>
+                    <td className="grand-total-value right-align">
+                      ₹{parseFloat(calculations.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           {/* Amount in Words */}
-          <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }}>
-            <strong>Amount in word(s):</strong><br />
-            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-              {calculations.grandTotalWords}
-            </span>
-          </div>
+          <div className='bottom-fixed'>
+            <div className='amount-in-words'>
+              <strong>Amount in word(s):</strong><br />
+              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+                {calculations.grandTotalWords}
+              </span>
+            </div>
 
-          {/* Thank you message */}
-          <div style={{ textAlign: 'center', marginTop: '40px', color: '#666' }}>
-            <p style={{ margin: 0, fontSize: '16px' }}>Thank you for choosing MDKJ Jewellers!</p>
-          </div>
-        </div >
+            {/* Thank you message */}
+            <div style={{ textAlign: 'center', marginTop: '40px', color: '#666' }}>
+              <p style={{ margin: 0, fontSize: '16px' }}>Thank you for choosing MDKJ Jewellers!</p>
+              <p style={{ margin: 20, fontSize: '11px' }}>This is a computer generated bill</p>
+            </div>
+          </div >
 
-        {/* Controls */}
+          {/* Controls */}
 
-        < div className='print-hide controlStyle' >
-          <div style={{ alignItems: 'center', gap: '8px' }} >
-            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>CGST (%):</label>
-            <input
-              type="number"
-              style={{ ...inputStyle, width: '80px' }}
-              value={cgstRate}
-              onChange={(e) => setCgstRate(parseFloat(e.target.value) || 0)}
-              min="0"
-              step="0.1"
-            />
-          </div>
+          < div className='print-hide controlStyle' >
+            <div style={{ alignItems: 'center', gap: '8px' }} >
+              <label style={{ fontSize: '14px', fontWeight: 'bold' }}>CGST (%):</label>
+              <input
+                type="number"
+                style={{ ...inputStyle, width: '80px' }}
+                value={cgstRate}
+                onChange={(e) => setCgstRate(parseFloat(e.target.value) || 0)}
+                min="0"
+                step="0.1"
+              />
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>SGST (%):</label>
-            <input
-              type="number"
-              style={{ ...inputStyle, width: '80px' }}
-              value={sgstRate}
-              onChange={(e) => setSgstRate(parseFloat(e.target.value) || 0)}
-              min="0"
-              step="0.1"
-            />
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 'bold' }}>SGST (%):</label>
+              <input
+                type="number"
+                style={{ ...inputStyle, width: '80px' }}
+                value={sgstRate}
+                onChange={(e) => setSgstRate(parseFloat(e.target.value) || 0)}
+                min="0"
+                step="0.1"
+              />
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>IGST (%):</label>
-            <input
-              type="number"
-              style={{ ...inputStyle, width: '80px' }}
-              value={igstRate}
-              onChange={(e) => setIgstRate(parseFloat(e.target.value) || 0)}
-              min="0"
-              step="0.1"
-            />
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 'bold' }}>IGST (%):</label>
+              <input
+                type="number"
+                style={{ ...inputStyle, width: '80px' }}
+                value={igstRate}
+                onChange={(e) => setIgstRate(parseFloat(e.target.value) || 0)}
+                min="0"
+                step="0.1"
+              />
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Hallmark Rate (₹):</label>
-            <input
-              type="number"
-              style={{ ...inputStyle, width: '80px' }}
-              value={hallmarkingCharges}
-              onChange={(e) => setHallmarkingCharges(parseFloat(e.target.value) || 0)}
-              min="0"
-              step="0.01"
-            />
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Hallmark Rate (₹):</label>
+              <input
+                type="number"
+                style={{ ...inputStyle, width: '80px' }}
+                value={hallmarkingCharges}
+                onChange={(e) => setHallmarkingCharges(parseFloat(e.target.value) || 0)}
+                min="0"
+                step="0.01"
+              />
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Pieces:</label>
-            <input
-              type="number"
-              style={{ ...inputStyle, width: '80px' }}
-              value={hallmarkingPieces}
-              onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
-              min="0"
-              step="1"
-            />
-          </div>
-          <div style={{ display: 'flex', alignSelf: "center", alignItems: 'right', gap: '8px' }}
-          >
-            <button
-              style={{ ...buttonStyle, backgroundColor: '#ffc107', color: 'black', fontSize: '16px', padding: '12px 24px' }}
-              onClick={async () => {
-                // Validation checks
-                if (!billHeader.customerName || !billHeader.customerPhone || !billHeader.customerAddress) {
-                  alert('Please fill all mandatory customer details.');
-                  return;
-                }
-
-                const customerExists = customers.some(customer => customer.gstin === billHeader.customerGstin);
-                if (!customerExists && billHeader.customerGstin) {
-                  const confirmCreate = window.confirm(
-                    'The GSTIN provided does not exist in the database. Do you want to create a new customer?'
-                  );
-                  if (!confirmCreate) return;
-
-                  try {
-                    await addRecord('customer_details', {
-                      name: billHeader.customerName,
-                      phone: billHeader.customerPhone,
-                      address: billHeader.customerAddress,
-                      email: billHeader.customerEmail,
-                      gstin: billHeader.customerGstin
-                    });
-                    alert('New customer created successfully.');
-                  } catch (err) {
-                    console.error('Error creating customer:', err);
-                    alert('Failed to create new customer.');
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 'bold' }}>Pieces:</label>
+              <input
+                type="number"
+                style={{ ...inputStyle, width: '80px' }}
+                value={hallmarkingPieces}
+                onChange={(e) => setHallmarkingPieces(parseInt(e.target.value) || 0)}
+                min="0"
+                step="1"
+              />
+            </div>
+            <div style={{ display: 'flex', alignSelf: "center", alignItems: 'right', gap: '8px' }}
+            >
+              <button
+                style={{ ...buttonStyle, backgroundColor: '#ffc107', color: 'black', fontSize: '16px', padding: '12px 24px' }}
+                onClick={async () => {
+                  // Validation checks
+                  if (!billHeader.customerName || !billHeader.customerPhone || !billHeader.customerAddress) {
+                    alert('Please fill all mandatory customer details.');
                     return;
                   }
-                }
 
-                // Prepare bill data
-                const billData = items.map(item => ({
-                  entry_type: 'bill',
-                  gstin: billHeader.customerGstin || null,
-                  dated: billHeader.date,
-                  bank: false, // Assuming bank is false by default
-                  bill_no: billHeader.billNumber || 'N/A',
-                  purity: item.purity || 'N/A',
-                  wt: item.weight,
-                  rate: item.rate,
-                  cgst: ((item.amount * cgstRate) / 100).toFixed(2),
-                  sgst: ((item.amount * sgstRate) / 100).toFixed(2),
-                  igst: ((item.amount * igstRate) / 100).toFixed(2),
-                  weight: item.weight,
-                  cash_amount: item.amount.toFixed(2),
-                  is_debit: true
-                }));
+                  const customerExists = customers.some(customer => customer.gstin === billHeader.customerGstin);
+                  if (!customerExists && billHeader.customerGstin) {
+                    const confirmCreate = window.confirm(
+                      'The GSTIN provided does not exist in the database. Do you want to create a new customer?'
+                    );
+                    if (!confirmCreate) return;
 
-                try {
-                  console.log(billData);
-                  await insertUnifiedEntry(billData[0]);
-                  alert('Bill submitted successfully.');
-                } catch (err) {
-                  console.error('Error submitting bill:', err);
-                  alert('Failed to submit bill.');
-                }
-              }}
-            >
-              Submit Bill
-            </button>
-            <button
-              style={{ ...buttonStyle, backgroundColor: '#007bff', color: 'white', fontSize: '16px', padding: '12px 24px' }}
-              onClick={handlePrint}
-            >
-              Print Bill
-            </button>
-          </div>
+                    try {
+                      await addRecord('customer_details', {
+                        name: billHeader.customerName,
+                        phone: billHeader.customerPhone,
+                        address: billHeader.customerAddress,
+                        email: billHeader.customerEmail,
+                        gstin: billHeader.customerGstin
+                      });
+                      alert('New customer created successfully.');
+                    } catch (err) {
+                      console.error('Error creating customer:', err);
+                      alert('Failed to create new customer.');
+                      return;
+                    }
+                  }
+
+                  // Prepare bill data
+                  const billData = items.map(item => ({
+                    entry_type: 'bill',
+                    gstin: billHeader.customerGstin || null,
+                    dated: billHeader.date,
+                    bank: false, // Assuming bank is false by default
+                    bill_no: billHeader.billNumber || 'N/A',
+                    purity: item.purity || 'N/A',
+                    wt: item.weight,
+                    rate: item.rate,
+                    cgst: ((item.amount * cgstRate) / 100).toFixed(2),
+                    sgst: ((item.amount * sgstRate) / 100).toFixed(2),
+                    igst: ((item.amount * igstRate) / 100).toFixed(2),
+                    weight: item.weight,
+                    cash_amount: item.amount.toFixed(2),
+                    is_debit: true
+                  }));
+
+                  try {
+                    console.log(billData);
+                    await insertUnifiedEntry(billData[0]);
+                    alert('Bill submitted successfully.');
+                  } catch (err) {
+                    console.error('Error submitting bill:', err);
+                    alert('Failed to submit bill.');
+                  }
+                }}
+              >
+                Submit Bill
+              </button>
+              <button
+                style={{ ...buttonStyle, backgroundColor: '#007bff', color: 'white', fontSize: '16px', padding: '12px 24px' }}
+                onClick={handlePrint}
+              >
+                Print Bill
+              </button>
+            </div>
+          </div >
+        </div>
+        {/* Usage Instructions */}
+        < div className='print-hide' style={{
+          marginTop: '20px',
+          padding: '20px',
+          backgroundColor: '#e3f2fd',
+          borderRadius: '8px',
+          border: '1px solid #2196f3'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', color: '#1976d2' }}>How to use:</h3>
+          <ul style={{ margin: 0, paddingLeft: '20px', color: '#333', lineHeight: '1.6' }}>
+            <li>Search for existing customers or enter new customer details manually</li>
+            <li>Click on customer name in dropdown to auto-fill their information</li>
+            <li>Click on any item cell to edit it directly</li>
+            <li>Weight and Rate will auto-calculate Amount when changed</li>
+            <li>Use Tab to move between fields, Enter to save</li>
+            <li>Adjust tax rates and hallmarking charges as needed</li>
+            <li>Print the final bill when ready</li>
+          </ul>
         </div >
-      </div>
-      {/* Usage Instructions */}
-      < div style={{
-        marginTop: '20px',
-        padding: '20px',
-        backgroundColor: '#e3f2fd',
-        borderRadius: '8px',
-        border: '1px solid #2196f3'
-      }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#1976d2' }}>How to use:</h3>
-        <ul style={{ margin: 0, paddingLeft: '20px', color: '#333', lineHeight: '1.6' }}>
-          <li>Search for existing customers or enter new customer details manually</li>
-          <li>Click on customer name in dropdown to auto-fill their information</li>
-          <li>Click on any item cell to edit it directly</li>
-          <li>Weight and Rate will auto-calculate Amount when changed</li>
-          <li>Use Tab to move between fields, Enter to save</li>
-          <li>Adjust tax rates and hallmarking charges as needed</li>
-          <li>Print the final bill when ready</li>
-        </ul>
       </div >
-    </div >
+    </div>
 
   );
 };

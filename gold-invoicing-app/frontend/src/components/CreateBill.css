@@ -19,10 +19,11 @@ h2 {
     --input-border-dark: #424242;
     --accent-light: #1a73e8;
     --accent-dark: #90caf9;
-    --table-header-bg-light: #f5f5f5;
+    --table-header-bg-light: #fdf6ec;
     --table-highlight-light: #e8f0fe;
     --table-highlight-dark: #232f3e;
     --thankyou-text-dark: #b0bec5;
+    --is-editing-bg: rgb(255, 146, 146);
 }
 
 body {
@@ -78,6 +79,7 @@ body.dark-mode .controlStyle {
     gap: 20px;
 }
 
+
 .create-bill__form-group {
     display: flex;
     flex-direction: column;
@@ -98,12 +100,16 @@ body.dark-mode .controlStyle {
 .create-bill__textarea {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid var(--input-border-light);
+    border: 1px solid var(--accent-light);
     border-radius: 4px;
     font-size: 14px;
     background-color: var(--bg-light);
     color: var(--text-light);
     transition: border-color 0.2s;
+}
+
+.create-bill__is-editing {
+    background: var(--is-editing-bg);
 }
 
 .create-bill__input:focus,
@@ -182,10 +188,12 @@ body.dark-mode .controlStyle {
     border: 1px solid var(--input-border-light);
     text-align: left;
     color: var(--text-light);
+
 }
 
 .create-bill__table-cell--center {
     text-align: center;
+
 }
 
 .create-bill__table-cell--right {
@@ -206,6 +214,7 @@ body.dark-mode .controlStyle {
 .create-bill__editable-text--bold {
     font-weight: bold;
 }
+
 
 /* ==============================
    Buttons
@@ -266,7 +275,7 @@ body.dark-mode .create-bill__button--print:hover {
 .create-bill__totals {
     width: 400px;
     margin-left: auto;
-    margin-top: 30px;
+    margin-top: 20px;
     background-color: var(--bg-light);
 }
 
@@ -281,10 +290,10 @@ body.dark-mode .create-bill__button--print:hover {
     color: var(--text-light);
 }
 
-.create-bill__totals td:first-child {
+/* .create-bill__totals td:second-child {
     font-weight: bold;
     background-color: var(--table-header-bg-light);
-}
+} */
 
 .create-bill__totals .grand-total {
     font-size: 18px;
@@ -301,7 +310,7 @@ body.dark-mode .create-bill__totals .grand-total {
    Amount in Words
 ============================== */
 .create-bill__amount-in-words {
-    margin-top: 30px;
+    margin-top: 10px;
     padding: 15px;
     background-color: #f9f9f9;
     border: 1px solid var(--input-border-light);
@@ -311,12 +320,63 @@ body.dark-mode .create-bill__totals .grand-total {
     color: var(--text-light);
 }
 
+.bill-totals-container {
+    /* width: 400px; */
+
+    margin-left: auto;
+    margin-top: 10px;
+}
+
+.bill-totals-table {
+    width: 100%;
+    padding: 50px;
+    border-collapse: collapse;
+}
+
+.bill-totals-label,
+.bill-totals-value {
+    border: 1px solid #333;
+    padding: 8px;
+    padding: 5px 50px;
+    ;
+}
+
+.bold-cell {
+    font-weight: bold;
+}
+
+.shaded-cell {
+    background-color: #f5f5f5;
+}
+
+.right-align {
+    text-align: right;
+}
+
+.indent {
+    padding-left: 20px;
+}
+
+.hallmarking-input {
+    width: 60px;
+    margin-left: 10px;
+}
+
+.grand-total-label,
+.grand-total-value {
+    padding: 12px;
+    font-weight: bold;
+    font-size: 18px;
+    background-color: #f0f0f0;
+    /* border: 2px solid #333; */
+}
+
 /* ==============================
    Thank You Message
 ============================== */
 .create-bill__thank-you {
     text-align: center;
-    margin-top: 40px;
+    margin-top: 20px;
     color: #666;
     font-size: 16px;
 }
@@ -351,6 +411,7 @@ body.dark-mode .create-bill__thank-you {
     padding: 40px;
     font-family: Arial, sans-serif;
     background-color: #fff;
+    font-size: 12px;
 }
 
 .bill-header {
@@ -367,7 +428,7 @@ body.dark-mode .create-bill__thank-you {
 }
 
 .bill-subtitle {
-    font-size: 24px;
+    font-size: 50px;
     margin: 0 0 15px 0;
     color: #333;
     font-family: "Perpetua", Georgia, serif;
@@ -420,4 +481,299 @@ body.dark-mode .create-bill__thank-you {
 .bill-metadata-line {
     margin: 5px 0;
     font-size: 14px;
+}
+
+
+.hallmark-row {
+    gap: 12px;
+    font-size: 12px;
+    margin: 14px;
+    font-style: italics !important;
+    align-items: center;
+    padding: 14px 14px;
+}
+
+.hallmark-row .label {
+    font-weight: 500;
+    font-style: italics !important;
+    color: #555;
+}
+
+.hallmark-row .value {
+    font-weight: bold;
+    font-style: italics !important;
+    color: #222;
+}
+
+.hallmark-row .separator {
+    color: #aaa;
+}
+
+
+
+@media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        height: 297mm;
+        padding: 10mm;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    html,
+    body {
+        margin: 20px;
+        padding: 0;
+        width: 210mm;
+        height: 297mm;
+        font-family: 'Georgia', 'Times New Roman', serif;
+        font-size: 13px;
+        background-color: white;
+        color: #222;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+
+
+    .bill-subtitle {
+        font-style: Perpetua !important;
+        font-size: 50px !important;
+    }
+
+    /* A4 Layout Container */
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        height: 297mm;
+        padding: 10mm;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    /* Header */
+    .bill-header {
+        text-align: center;
+        border-bottom: 2px solid #d4af37;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+    }
+
+    .bill-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #222;
+        letter-spacing: 1px;
+    }
+
+    .bill-subtitle {
+        font-size: 60px !important;
+        margin-top: 4px;
+        color: #555;
+        font-family: 'Times New Roman';
+    }
+
+    .bill-store-address,
+    .bill-store-contact {
+        margin: 0 !important;
+        font-size: 12px;
+        color: #666;
+    }
+
+    /* Bill Info */
+    .bill-info {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        flex-wrap: wrap;
+        font-size: 13px;
+    }
+
+    .bill-section-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .bill-customer-name {
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .bill-metadata-line {
+        margin-bottom: 3px;
+    }
+
+    /* Items Table */
+    .create-bill__table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 12px;
+        flex-shrink: 1;
+        min-height: 100px;
+        overflow: hidden;
+    }
+
+    .create-bill__table th,
+    .create-bill__table td,
+    .create-bill__table-cell,
+    .create-bill__table-cell--header {
+        margin: 5px;
+
+        border: 1px solid #ccc !important;
+        padding: 6px 8px;
+        vertical-align: center;
+        align-items: center;
+        text-align: center;
+
+    }
+
+    .create-bill__table th,
+    .amount_in_words {
+        background-color: #fdf6ec;
+        color: #333;
+        font-weight: bold;
+    }
+
+    .create-bill__table td input {
+
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: white;
+        font-size: 12px;
+        font-family: 'Georgia', serif;
+    }
+
+    /* Totals Table */
+    .bill-totals-container {
+        margin-top: 20px;
+        border-top: 2px solid #d4af37 !important;
+        padding-top: 10px;
+        flex-grow: 0;
+    }
+
+    #hallmarking_total {
+        border-top: 2px solid #d4af37 !important;
+        margin-top: 20px;
+    }
+
+    .bill-totals-table {
+        width: 100%;
+        font-size: 13px;
+
+    }
+
+    .bill-totals-label,
+    .bill-totals-value {
+        margin: 1px 20px;
+        padding: 1px 20px;
+        color: #444;
+        border: 0px !important;
+    }
+
+    .bill-totals-value {
+        text-align: right;
+    }
+
+    .indent {
+        padding-left: 20px;
+        font-style: italic;
+        color: #666;
+    }
+
+    .grand-total-label {
+        background-color: #d4af37;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .grand-total-value {
+        background-color: #d4af37;
+        color: white;
+        text-align: right;
+        font-weight: bold;
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    /* Amount in Words */
+    .amount-in-words {
+        margin-top: 13px;
+        padding: 8px 16px;
+        background: #fcf8f2;
+        border: 1px solid #e0dcd2;
+        border-left: 5px solid #d4af37;
+        border-radius: 4px;
+
+        font-size: 13px;
+        color: #4a4a4a;
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .amount-in-words strong {
+        font-size: 13px;
+        color: #333;
+
+    }
+
+    .amount-in-words span {
+        font-size: 13px;
+        font-weight: bold;
+        color: #2f2f2f;
+        margin-top: auto;
+
+
+    }
+
+    .bottom-fixed {
+        position: absolute;
+        bottom: 15mm;
+        /* Adjust distance from bottom */
+        left: 10mm;
+        right: 10mm;
+        width: auto;
+    }
+
+    /* Footer Note */
+    .footer-note {
+        text-align: center;
+        font-size: 13px;
+        margin-top: 20px;
+        color: #666;
+    }
+
+
+    /* Hide controls & navbar in print */
+    .print-hide,
+    .create-bill__button,
+    .navbar {
+        display: none !important;
+    }
+
+
+    html,
+    body {
+        width: 210mm;
+        height: 297mm;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+
+
+    .print-hide {
+        display: none;
+    }
 }
