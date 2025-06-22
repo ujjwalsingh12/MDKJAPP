@@ -11,7 +11,7 @@ const CreateBill = () => {
   const [sgstRate, setSgstRate] = useState(1.5);
   const [igstRate, setIgstRate] = useState(0);
   const [hallmarkingCharges, setHallmarkingCharges] = useState(45.00);
-  const [hallmarkingPieces, setHallmarkingPieces] = useState(40);
+  const [hallmarkingPieces, setHallmarkingPieces] = useState(0);
   const [hallmarkingCgst, setHallmarkingCgst] = useState(9.0);
   const [hallmarkingSgst, setHallmarkingSgst] = useState(9.0);
   const [discount, setDiscount] = useState(0);
@@ -120,7 +120,10 @@ const CreateBill = () => {
         </td>
 
         <td className="create-bill__table-cell create-bill__table-cell--center">
-          {hallmarkingPieces > 0 ? (hallmarkingPieces * hallmarkingCharges).toFixed(2) : ""}
+
+          <strong>{hallmarkingPieces > 0 ? (hallmarkingPieces * hallmarkingCharges).toFixed(2) : ""}
+          </strong>
+
         </td>
       </tr>
     )
@@ -624,10 +627,12 @@ const CreateBill = () => {
               <table className="bill-totals-table">
                 <tbody>
                   <tr>
-                    <td className="bill-totals-label bold-cell shaded-cell">
+
+                    <td className="bill-totals-label bold-cell">
                       Total Taxable
                     </td>
-                    <td className="bill-totals-value bold-cell shaded-cell right-align">
+                    <td className="bill-totals-value bold-cell right-align">
+
                       ₹{parseFloat(calculations.totalTaxable).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                   </tr>
@@ -650,10 +655,12 @@ const CreateBill = () => {
                     </td>
                   </tr>
                   <tr>
-                    <td className="bill-totals-label">
+
+                    <td id='hallmarking_total_label' className="bill-totals-label">
                       Hallmarking Charges
                     </td>
-                    <td id='hallmarking_total' className="bill-totals-value right-align">
+                    <td id='hallmarking_total_value' className="bill-totals-value right-align">
+
                       ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                   </tr>
@@ -685,12 +692,12 @@ const CreateBill = () => {
                       ₹{parseFloat(calculations.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </tbody >
+              </table >
+            </div >
+          </div >
           {/* Amount in Words */}
-          <div className='bottom-fixed'>
+          < div className='bottom-fixed' >
             <div className='amount-in-words'>
               <strong>Amount in word(s):</strong><br />
               <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
@@ -839,7 +846,7 @@ const CreateBill = () => {
               </button>
             </div>
           </div >
-        </div>
+        </div >
         {/* Usage Instructions */}
         < div className='print-hide' style={{
           marginTop: '20px',
@@ -860,7 +867,7 @@ const CreateBill = () => {
           </ul>
         </div >
       </div >
-    </div>
+    </div >
 
   );
 };

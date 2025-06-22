@@ -578,7 +578,7 @@ body.dark-mode .create-bill__thank-you {
         font-size: 60px !important;
         margin-top: 4px;
         color: #555;
-        font-family: 'Times New Roman';
+        font-family: "Perpetua", "Georgia", "Times New Roman", serif;
     }
 
     .bill-store-address,
@@ -656,13 +656,14 @@ body.dark-mode .create-bill__thank-you {
 
     /* Totals Table */
     .bill-totals-container {
-        margin-top: 20px;
+        /* margin-top: 20px; */
         border-top: 2px solid #d4af37 !important;
         padding-top: 10px;
         flex-grow: 0;
     }
 
-    #hallmarking_total {
+    #hallmarking_total_label,
+    #hallmarking_total_value {
         border-top: 2px solid #d4af37 !important;
         margin-top: 20px;
     }
