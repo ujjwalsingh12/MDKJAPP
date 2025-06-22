@@ -233,22 +233,7 @@ const CreateBill = () => {
       <html>
         <head>
           <title>Print Bill - ${billHeader.billNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .bill-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-            .bill-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
-            .customer-info { text-align: left; }
-            .bill-details { text-align: right; }
-            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f5f5f5; font-weight: bold; }
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-            .totals { margin-top: 20px; }
-            .total-row { font-weight: bold; background-color: #f0f0f0; }
-            .print-hide { display: none; }
-            .grand-total { font-size: 18px; font-weight: bold; }
-          </style>
+          <link rel="stylesheet" type="text/css" href="src/components/CreateBill.css">
         </head>
         <body>${printContent}</body>
       </html>
@@ -268,26 +253,6 @@ const CreateBill = () => {
     // backgroundColor: '#f8f9fa'
   };
 
-  const headerSectionStyle = {
-    backgroundColor: 'white',
-    padding: '30px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-  };
-
-  const formGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '20px'
-  };
-
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '5px',
-    fontWeight: 'bold',
-    color: '#333'
-  };
 
   const inputStyle = {
     width: '100%',
@@ -297,53 +262,6 @@ const CreateBill = () => {
     fontSize: '14px'
   };
 
-  const customerDropdownStyle = {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    border: '1px solid #ddd',
-    borderTop: 'none',
-    borderRadius: '0 0 4px 4px',
-    maxHeight: '200px',
-    overflowY: 'auto',
-    zIndex: 1000
-  };
-
-  const customerOptionStyle = {
-    padding: '10px',
-    cursor: 'pointer',
-    borderBottom: '1px solid #eee'
-  };
-
-  const billPreviewStyle = {
-    // backgroundColor: 'white',
-    padding: '40px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-  };
-
-  const tableStyle = {
-    width: '100%',
-    borderCollapse: 'collapse',
-    margin: '20px 0'
-  };
-
-  const thStyle = {
-    border: '1px solid #ddd',
-    padding: '12px',
-    backgroundColor: '#f5f5f5',
-    fontWeight: 'bold',
-    textAlign: 'left'
-  };
-
-  const tdStyle = {
-    border: '1px solid #ddd',
-    padding: '8px'
-  };
-
 
   const buttonStyle = {
     padding: '8px 16px',
@@ -351,26 +269,6 @@ const CreateBill = () => {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '14px'
-  };
-
-  const editButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#007bff',
-    color: 'white',
-    marginRight: '5px'
-  };
-
-  const saveButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#28a745',
-    color: 'white',
-    marginRight: '5px'
-  };
-
-  const deleteButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#dc3545',
-    color: 'white'
   };
 
   return (
@@ -466,226 +364,208 @@ const CreateBill = () => {
       </div>
 
       {/* --- Bill Preview Section --- */}
-      <div ref={billRef} style={billPreviewStyle}>
+      <div ref={billRef} className="bill-preview">
         {/* Bill Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
-          <h1 style={{ fontSize: '36px', margin: '0 0 10px 0', color: '#333' }}>INVOICE</h1>
-          <h2 style={{ fontSize: '24px', margin: '0 0 15px 0', color: '#333' }}>{storeInfo.storeName}</h2>
-          <div style={{ color: '#666', lineHeight: '1.4' }}>
+        <div className="bill-header">
+          <h1 className="bill-title">INVOICE</h1>
+          <h2 className="bill-subtitle">{storeInfo.storeName}</h2>
+          <div className="bill-store-address">
             {storeInfo.storeAddress.split('\n').map((line, i) => (
-              <p key={i} style={{ margin: '5px 0' }}>{line}</p>
+              <p key={i} className="bill-store-address-line">{line}</p>
             ))}
           </div>
-          <p style={{ color: '#666', margin: '10px 0 0 0' }}>
+          <p className="bill-store-contact">
             Phone: {storeInfo.phone} | Email: {storeInfo.email}
           </p>
         </div>
 
         {/* Bill Info */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-          <div>
-            <h3 style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Bill To:</h3>
-            <p style={{ margin: '5px 0', fontSize: '16px' }}>
-              <strong>{billHeader.customerName || 'Customer Name'}</strong>
-            </p>
-            {billHeader.customerPhone && (
-              <p style={{ margin: '5px 0', fontSize: '14px' }}>
-                Phone: {billHeader.customerPhone}
-              </p>
-            )}
-            {billHeader.customerGstin && (
-              <p style={{ margin: '5px 0', fontSize: '14px' }}>
-                GSTIN: {billHeader.customerGstin}
-              </p>
-            )}
-            {billHeader.customerAddress && (
-              <p style={{ margin: '5px 0', fontSize: '14px', whiteSpace: 'pre-line' }}>
-                {billHeader.customerAddress}
-              </p>
-            )}
-            {billHeader.customerEmail && (
-              <p style={{ margin: '5px 0', fontSize: '14px' }}>
-                Email: {billHeader.customerEmail}
-              </p>
-            )}
+        <div className="bill-info">
+          <div className="bill-customer">
+            <h3 className="bill-section-title">Bill To:</h3>
+            <p className="bill-customer-name"><strong>{billHeader.customerName || 'Customer Name'}</strong></p>
+            {billHeader.customerPhone && <p className="bill-customer-detail">Phone: {billHeader.customerPhone}</p>}
+            {billHeader.customerGstin && <p className="bill-customer-detail">GSTIN: {billHeader.customerGstin}</p>}
+            {billHeader.customerAddress && <p className="bill-customer-detail" style={{ whiteSpace: 'pre-line' }}>{billHeader.customerAddress}</p>}
+            {billHeader.customerEmail && <p className="bill-customer-detail">Email: {billHeader.customerEmail}</p>}
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: '5px 0' }}><strong>Bill #:</strong> {billHeader.billNumber}</p>
-            <p style={{ margin: '5px 0' }}><strong>Date:</strong> {billHeader.date}</p>
+          <div className="bill-metadata">
+            <p className="bill-metadata-line"><strong>Bill #:</strong> {billHeader.billNumber}</p>
+            <p className="bill-metadata-line"><strong>Date:</strong> {billHeader.date}</p>
           </div>
         </div>
-        <div>
-          {/* Items Table */}
-          <table className="create-bill__table">
-            <thead className="create-bill__table-head">
-              <tr className="create-bill__table-row create-bill__table-row--header">
-                <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">S.No</th>
-                <th className="create-bill__table-cell create-bill__table-cell--header">Description</th>
-                <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">HSN/SAC</th>
-                <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">Purity</th>
-                <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">Weight (in gms)</th>
-                <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--right">Rate (₹)</th>
-                <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--right">Amount (₹)</th>
-                <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center print-hide">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="create-bill__table-body">
-              {items.map((item, rowIndex) => (
-                <tr
-                  key={item.id}
-                  className={`create-bill__table-row ${selectedRowIndex === rowIndex ? 'create-bill__table-row--highlight' : ''}`}
-                  onMouseEnter={() => setSelectedRowIndex(rowIndex)}
-                  onMouseLeave={() => setSelectedRowIndex(null)}
-                >
-                  <td className="create-bill__table-cell create-bill__table-cell--center create-bill__table-cell--bold">
-                    {rowIndex + 1}
-                  </td>
-                  <td className="create-bill__table-cell">
-                    {item.isEditing ? (
-                      <input
-                        type="text"
-                        className="create-bill__input"
-                        value={item.description}
-                        data-row={rowIndex}
-                        data-field="description"
-                        onChange={(e) => handleItemChange(rowIndex, 'description', e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'description')}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        className="create-bill__editable-text"
-                        onClick={() => handleEditClick(rowIndex)}
-                      >
-                        {item.description || 'Click to edit'}
-                      </span>
-                    )}
-                  </td>
-                  <td className="create-bill__table-cell create-bill__table-cell--center">
-                    {item.isEditing ? (
-                      <input
-                        type="text"
-                        className="create-bill__input create-bill__input--small"
-                        value={item.hsnSac}
-                        data-row={rowIndex}
-                        data-field="hsnSac"
-                        onChange={(e) => handleItemChange(rowIndex, 'hsnSac', e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'hsnSac')}
-                      />
-                    ) : (
-                      <span
-                        className="create-bill__editable-text"
-                        onClick={() => handleEditClick(rowIndex)}
-                      >
-                        {item.hsnSac}
-                      </span>
-                    )}
-                  </td>
-                  <td className="create-bill__table-cell create-bill__table-cell--center">
-                    {item.isEditing ? (
-                      <input
-                        type="text"
-                        className="create-bill__input create-bill__input--small"
-                        value={item.purity}
-                        data-row={rowIndex}
-                        data-field="purity"
-                        onChange={(e) => handleItemChange(rowIndex, 'purity', e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'purity')}
-                      />
-                    ) : (
-                      <span
-                        className="create-bill__editable-text"
-                        onClick={() => handleEditClick(rowIndex)}
-                      >
-                        {item.purity}
-                      </span>
-                    )}
-                  </td>
-                  <td className="create-bill__table-cell create-bill__table-cell--center">
-                    {item.isEditing ? (
-                      <input
-                        type="number"
-                        className="create-bill__input create-bill__input--small"
-                        value={item.weight}
-                        data-row={rowIndex}
-                        data-field="weight"
-                        onChange={(e) => handleItemChange(rowIndex, 'weight', e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'weight')}
-                        min="0"
-                        step="0.001"
-                      />
-                    ) : (
-                      <span
-                        className="create-bill__editable-text"
-                        onClick={() => handleEditClick(rowIndex)}
-                      >
-                        {item.weight.toFixed(3)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="create-bill__table-cell create-bill__table-cell--right">
-                    {item.isEditing ? (
-                      <input
-                        type="number"
-                        className="create-bill__input create-bill__input--small"
-                        value={item.rate}
-                        data-row={rowIndex}
-                        data-field="rate"
-                        onChange={(e) => handleItemChange(rowIndex, 'rate', e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'rate')}
-                        min="0"
-                        step="0.01"
-                      />
-                    ) : (
-                      <span
-                        className="create-bill__editable-text"
-                        onClick={() => handleEditClick(rowIndex)}
-                      >
-                        ₹{item.rate.toFixed(2)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="create-bill__table-cell create-bill__table-cell--right">
-                    {item.isEditing ? (
-                      <input
-                        type="number"
-                        className="create-bill__input create-bill__input--small"
-                        value={item.amount}
-                        data-row={rowIndex}
-                        data-field="amount"
-                        onChange={(e) => handleItemChange(rowIndex, 'amount', e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, rowIndex, 'amount')}
-                        min="0"
-                        step="0.01"
-                      />
-                    ) : (
-                      <span
-                        className="create-bill__editable-text create-bill__editable-text--bold"
-                        onClick={() => handleEditClick(rowIndex)}
-                      >
-                        ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    )}
-                  </td>
-                  <td className="create-bill__table-cell create-bill__table-cell--center print-hide">
-                    <button
-                      className={`create-bill__button ${item.isEditing ? 'create-bill__button--save' : 'create-bill__button--edit'}`}
+
+        {/* Items Table */}
+        <table className="create-bill__table">
+          <thead className="create-bill__table-head">
+            <tr className="create-bill__table-row create-bill__table-row--header">
+              <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">S.No</th>
+              <th className="create-bill__table-cell create-bill__table-cell--header">Description</th>
+              <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">HSN/SAC</th>
+              <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">Purity</th>
+              <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center">Weight (in gms)</th>
+              <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--right">Rate (₹)</th>
+              <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--right">Amount (₹)</th>
+              <th className="create-bill__table-cell create-bill__table-cell--header create-bill__table-cell--center print-hide">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="create-bill__table-body">
+            {items.map((item, rowIndex) => (
+              <tr
+                key={item.id}
+                className={`create-bill__table-row ${selectedRowIndex === rowIndex ? 'create-bill__table-row--highlight' : ''}`}
+                onMouseEnter={() => setSelectedRowIndex(rowIndex)}
+                onMouseLeave={() => setSelectedRowIndex(null)}
+              >
+                <td className="create-bill__table-cell create-bill__table-cell--center create-bill__table-cell--bold">
+                  {rowIndex + 1}
+                </td>
+                <td className="create-bill__table-cell">
+                  {item.isEditing ? (
+                    <input
+                      type="text"
+                      className="create-bill__input"
+                      value={item.description}
+                      data-row={rowIndex}
+                      data-field="description"
+                      onChange={(e) => handleItemChange(rowIndex, 'description', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'description')}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      className="create-bill__editable-text"
                       onClick={() => handleEditClick(rowIndex)}
                     >
-                      {item.isEditing ? 'Save' : 'Edit'}
-                    </button>
-                    <button
-                      className="create-bill__button create-bill__button--delete"
-                      onClick={() => handleDeleteRow(rowIndex)}
+                      {item.description || 'Click to edit'}
+                    </span>
+                  )}
+                </td>
+                <td className="create-bill__table-cell create-bill__table-cell--center">
+                  {item.isEditing ? (
+                    <input
+                      type="text"
+                      className="create-bill__input create-bill__input--small"
+                      value={item.hsnSac}
+                      data-row={rowIndex}
+                      data-field="hsnSac"
+                      onChange={(e) => handleItemChange(rowIndex, 'hsnSac', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'hsnSac')}
+                    />
+                  ) : (
+                    <span
+                      className="create-bill__editable-text"
+                      onClick={() => handleEditClick(rowIndex)}
                     >
-                      Del
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
+                      {item.hsnSac}
+                    </span>
+                  )}
+                </td>
+                <td className="create-bill__table-cell create-bill__table-cell--center">
+                  {item.isEditing ? (
+                    <input
+                      type="text"
+                      className="create-bill__input create-bill__input--small"
+                      value={item.purity}
+                      data-row={rowIndex}
+                      data-field="purity"
+                      onChange={(e) => handleItemChange(rowIndex, 'purity', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'purity')}
+                    />
+                  ) : (
+                    <span
+                      className="create-bill__editable-text"
+                      onClick={() => handleEditClick(rowIndex)}
+                    >
+                      {item.purity}
+                    </span>
+                  )}
+                </td>
+                <td className="create-bill__table-cell create-bill__table-cell--center">
+                  {item.isEditing ? (
+                    <input
+                      type="number"
+                      className="create-bill__input create-bill__input--small"
+                      value={item.weight}
+                      data-row={rowIndex}
+                      data-field="weight"
+                      onChange={(e) => handleItemChange(rowIndex, 'weight', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'weight')}
+                      min="0"
+                      step="0.001"
+                    />
+                  ) : (
+                    <span
+                      className="create-bill__editable-text"
+                      onClick={() => handleEditClick(rowIndex)}
+                    >
+                      {item.weight.toFixed(3)}
+                    </span>
+                  )}
+                </td>
+                <td className="create-bill__table-cell create-bill__table-cell--right">
+                  {item.isEditing ? (
+                    <input
+                      type="number"
+                      className="create-bill__input create-bill__input--small"
+                      value={item.rate}
+                      data-row={rowIndex}
+                      data-field="rate"
+                      onChange={(e) => handleItemChange(rowIndex, 'rate', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'rate')}
+                      min="0"
+                      step="0.01"
+                    />
+                  ) : (
+                    <span
+                      className="create-bill__editable-text"
+                      onClick={() => handleEditClick(rowIndex)}
+                    >
+                      ₹{item.rate.toFixed(2)}
+                    </span>
+                  )}
+                </td>
+                <td className="create-bill__table-cell create-bill__table-cell--right">
+                  {item.isEditing ? (
+                    <input
+                      type="number"
+                      className="create-bill__input create-bill__input--small"
+                      value={item.amount}
+                      data-row={rowIndex}
+                      data-field="amount"
+                      onChange={(e) => handleItemChange(rowIndex, 'amount', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, rowIndex, 'amount')}
+                      min="0"
+                      step="0.01"
+                    />
+                  ) : (
+                    <span
+                      className="create-bill__editable-text create-bill__editable-text--bold"
+                      onClick={() => handleEditClick(rowIndex)}
+                    >
+                      ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  )}
+                </td>
+                <td className="create-bill__table-cell create-bill__table-cell--center print-hide">
+                  <button
+                    className={`create-bill__button ${item.isEditing ? 'create-bill__button--save' : 'create-bill__button--edit'}`}
+                    onClick={() => handleEditClick(rowIndex)}
+                  >
+                    {item.isEditing ? 'Save' : 'Edit'}
+                  </button>
+                  <button
+                    className="create-bill__button create-bill__button--delete"
+                    onClick={() => handleDeleteRow(rowIndex)}
+                  >
+                    Del
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div>
 
           <div className='controlStyle'>
             <button
@@ -808,11 +688,11 @@ const CreateBill = () => {
           <div style={{ textAlign: 'center', marginTop: '40px', color: '#666' }}>
             <p style={{ margin: 0, fontSize: '16px' }}>Thank you for choosing MDKJ Jewellers!</p>
           </div>
-        </div>
+        </div >
 
         {/* Controls */}
 
-        <div className='print-hide controlStyle'>
+        < div className='print-hide controlStyle' >
           <div style={{ alignItems: 'center', gap: '8px' }} >
             <label style={{ fontSize: '14px', fontWeight: 'bold' }}>CGST (%):</label>
             <input
@@ -943,11 +823,10 @@ const CreateBill = () => {
               Print Bill
             </button>
           </div>
-        </div>
+        </div >
       </div>
-
       {/* Usage Instructions */}
-      <div style={{
+      < div style={{
         marginTop: '20px',
         padding: '20px',
         backgroundColor: '#e3f2fd',
@@ -964,8 +843,9 @@ const CreateBill = () => {
           <li>Adjust tax rates and hallmarking charges as needed</li>
           <li>Print the final bill when ready</li>
         </ul>
-      </div>
+      </div >
     </div >
+
   );
 };
 
@@ -1052,3 +932,21 @@ const convertToWords = (num) => {
 
 
 // ------------- SCROLL UP TO SEE THE END OF FILE ------------- 
+
+
+// <style>
+//   body {font - family: Arial, sans-serif; margin: 20px; }
+//   .bill-header {text - align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+//   .bill-info {display: flex; justify-content: space-between; margin-bottom: 20px; }
+//   .customer-info {text - align: left; }
+//   .bill-details {text - align: right; }
+//   table {width: 100%; border-collapse: collapse; margin: 20px 0; }
+//   th, td {border: 1px solid #ddd; padding: 8px; text-align: left; }
+//   th {background - color: #f5f5f5; font-weight: bold; }
+//   .text-right {text - align: right; }
+//   .text-center {text - align: center; }
+//   .totals {margin - top: 20px; }
+//   .total-row {font - weight: bold; background-color: #f0f0f0; }
+//   .print-hide {display: none; }
+//   .grand-total {font - size: 18px; font-weight: bold; }
+// </style>

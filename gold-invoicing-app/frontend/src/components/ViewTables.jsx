@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchAll, updateRecord } from "../api/index"; // Import updateRecord
+import { fetchAll, updateRecord, check } from "../api/index"; // Import updateRecord
 import { fetchTableSchema } from "../api/index"; // Import the function to fetch table schema
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
@@ -149,6 +149,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
             if (Array.isArray(response.data)) {
                 setData(response.data);
                 setsData(response.data); // Store original data
+
             } else {
                 console.error(`Unexpected data format for table: ${tableName}`, response.data);
                 setData([]);
@@ -194,7 +195,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         }));
     };
 
-    const handlePageChange = (newPage) => {
+    const handlePageChange = async (newPage) => {
         setParams((prev) => ({ ...prev, page: newPage }));
     };
 
@@ -203,7 +204,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         setParams((prev) => ({ ...prev, page_size: newPageSize }));
     };
 
-    const handleCellChange = (rowIndex, columnKey, value) => {
+    const handleCellChange = async (rowIndex, columnKey, value) => {
         // const newData = [...data];
         // const snewData = [...sdata];
         // data[rowIndex][columnKey] = value;
@@ -213,7 +214,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         // setsData(snewData);
     };
 
-    const handleRowHover = (rowIndex) => {
+    const handleRowHover = async (rowIndex) => {
         try {
             setSelectedRowIndex(rowIndex);
         } catch (err) {
@@ -229,11 +230,11 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
             // Create a copy of the row data without the editing flags
             const cleanRowData = row;
             delete cleanRowData.isEditing;
-            delete cleanRowData.original;
+            // delete cleanRowData.original;
 
             // Call the updateRecord function with tableName and clean data
             console.log('clean', cleanRowData);
-            await updateRecord(tableName, cleanRowData);
+            await check(tableName, cleanRowData);
 
             // Update the local state
             // const newData = [...data];
@@ -242,9 +243,9 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
             // setData(Data);
 
             // Optionally refresh the data from server
-            await fetchData();
 
-            console.log('Record updated successfully');
+            alert('Record updated successfully');
+            await fetchData();
 
         } catch (error) {
             console.error('Error updating row:', error);
@@ -253,7 +254,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
     };
 
     // Function for handling edit button click (to enter edit mode)
-    const handleEditClick = (rowIndex) => {
+    const handleEditClick = async (rowIndex) => {
         setsData(data);
         data[rowIndex].isEditing = true;
         // Store original data for cancel functionality
@@ -261,12 +262,13 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         // setData(newData);
     };
 
-    const handleCancelClick = (rowIndex) => {
-        const newData = [...data];
-        newData[rowIndex] = { ...newData[rowIndex].original }; // Restore original data
-        newData[rowIndex].isEditing = false; // Reset editing state
-        delete newData[rowIndex].original; // Clean up
-        setData(newData);
+    const handleCancelClick = async (rowIndex) => {
+        // const newData = [...data];
+        // newData[rowIndex] = { ...newData[rowIndex].original }; // Restore original data
+        // newData[rowIndex].isEditing = false; // Reset editing state
+        // delete newData[rowIndex].original; // Clean up
+        data[rowIndex].isEditing = false;
+        setData(sdata);
     };
 
     return (

@@ -1,14 +1,56 @@
-/* Customer Details Section */
-.create-bill__header-section {
-    background-color: #ffffff;
+/* ==============================
+   Font Setup
+============================== */
+/* Optional fallback: only if locally installed or loaded via another method */
+h2 {
+    font-family: "Perpetua", "Georgia", "Times New Roman", serif;
+}
+
+/* ==============================
+   Theme Variables
+============================== */
+:root {
+    --bg-light: #ffffff;
+    --bg-dark: #232323;
+    --text-light: #333;
+    --text-dark: #e0e0e0;
+    --label-dark: #b0bec5;
+    --input-border-light: #ddd;
+    --input-border-dark: #424242;
+    --accent-light: #1a73e8;
+    --accent-dark: #90caf9;
+    --table-header-bg-light: #f5f5f5;
+    --table-highlight-light: #e8f0fe;
+    --table-highlight-dark: #232f3e;
+    --thankyou-text-dark: #b0bec5;
+}
+
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+    --bg-light: var(--bg-dark);
+    --text-light: var(--text-dark);
+    --input-border-light: var(--input-border-dark);
+    --accent-light: var(--accent-dark);
+}
+
+/* ==============================
+   Layout Containers
+============================== */
+.create-bill__header-section,
+.controlStyle {
+    background-color: var(--bg-light);
     padding: 30px;
     border-radius: 8px;
     margin-bottom: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-body.dark-mode .create-bill__header-section {
-    background-color: #1e1e1e;
+body.dark-mode .create-bill__header-section,
+body.dark-mode .controlStyle {
     box-shadow: 0 2px 10px rgba(255, 255, 255, 0.05);
 }
 
@@ -17,26 +59,17 @@ body.dark-mode .create-bill__header-section {
     flex-wrap: wrap;
     gap: 15px;
     align-items: center;
-    background-color: white;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-body.dark-mode .controlStyle {
-    background-color: #232323;
-    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.05);
-}
-
+/* ==============================
+   Form Elements
+============================== */
 .create-bill__header-title {
     font-size: 24px;
     font-weight: bold;
-    color: #333;
+    color: var(--text-light);
     margin-bottom: 20px;
-}
-
-body.dark-mode .create-bill__header-title {
-    color: #e0e0e0;
 }
 
 .create-bill__form-grid {
@@ -57,40 +90,26 @@ body.dark-mode .create-bill__header-title {
 .create-bill__label {
     font-size: 14px;
     font-weight: bold;
-    color: #333;
+    color: var(--text-light);
     margin-bottom: 5px;
-}
-
-body.dark-mode .create-bill__label {
-    color: #b0bec5;
 }
 
 .create-bill__input,
 .create-bill__textarea {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--input-border-light);
     border-radius: 4px;
     font-size: 14px;
+    background-color: var(--bg-light);
+    color: var(--text-light);
     transition: border-color 0.2s;
-}
-
-body.dark-mode .create-bill__input,
-body.dark-mode .create-bill__textarea {
-    background-color: #232323;
-    color: #e0e0e0;
-    border: 1px solid #424242;
 }
 
 .create-bill__input:focus,
 .create-bill__textarea:focus {
-    border-color: #1a73e8;
+    border-color: var(--accent-light);
     outline: none;
-}
-
-body.dark-mode .create-bill__input:focus,
-body.dark-mode .create-bill__textarea:focus {
-    border-color: #90caf9;
 }
 
 .create-bill__textarea {
@@ -98,13 +117,21 @@ body.dark-mode .create-bill__textarea:focus {
     min-height: 80px;
 }
 
+.create-bill__input--small {
+    width: 80px;
+    padding: 6px;
+}
+
+/* ==============================
+   Dropdown
+============================== */
 .create-bill__dropdown {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
-    background-color: #ffffff;
-    border: 1px solid #ddd;
+    background-color: var(--bg-light);
+    border: 1px solid var(--input-border-light);
     border-top: none;
     border-radius: 0 0 4px 4px;
     max-height: 200px;
@@ -112,89 +139,49 @@ body.dark-mode .create-bill__textarea:focus {
     z-index: 1000;
 }
 
-body.dark-mode .create-bill__dropdown {
-    background-color: #232323;
-    border: 1px solid #424242;
-}
-
 .create-bill__dropdown-item {
     padding: 10px;
     cursor: pointer;
     border-bottom: 1px solid #eee;
     transition: background-color 0.2s, color 0.2s;
-}
-
-body.dark-mode .create-bill__dropdown-item {
-    color: #e0e0e0;
-    border-bottom: 1px solid #333;
+    color: var(--text-light);
 }
 
 .create-bill__dropdown-item:hover,
 .create-bill__dropdown-item--hover {
-    background-color: #e8f0fe;
-    color: #1a73e8;
+    background-color: var(--table-highlight-light);
+    color: var(--accent-light);
 }
 
-body.dark-mode .create-bill__dropdown-item:hover,
-body.dark-mode .create-bill__dropdown-item--hover {
-    background-color: #424242;
-    color: #90caf9;
-}
-
-/* Items Table */
+/* ==============================
+   Table Styling
+============================== */
 .create-bill__table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
 }
 
-.create-bill__table-head {
-    background-color: #f5f5f5;
-}
-
-body.dark-mode .create-bill__table-head {
-    background-color: #232323;
+.create-bill__table-head,
+.create-bill__table-cell--header {
+    background-color: var(--table-header-bg-light);
+    font-weight: bold;
+    color: var(--text-light);
 }
 
 .create-bill__table-row {
-    border-bottom: 1px solid #ddd;
-}
-
-body.dark-mode .create-bill__table-row {
-    border-bottom: 1px solid #424242;
-}
-
-.create-bill__table-row--header {
-    font-weight: bold;
+    border-bottom: 1px solid var(--input-border-light);
 }
 
 .create-bill__table-row--highlight {
-    background-color: #e8f0fe;
-}
-
-body.dark-mode .create-bill__table-row--highlight {
-    background-color: #232f3e;
+    background-color: var(--table-highlight-light);
 }
 
 .create-bill__table-cell {
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--input-border-light);
     text-align: left;
-}
-
-body.dark-mode .create-bill__table-cell {
-    border: 1px solid #424242;
-    color: #e0e0e0;
-}
-
-.create-bill__table-cell--header {
-    font-weight: bold;
-    background-color: #f5f5f5;
-}
-
-body.dark-mode .create-bill__table-cell--header {
-    background-color: #232323;
-    color: #b0bec5;
+    color: var(--text-light);
 }
 
 .create-bill__table-cell--center {
@@ -209,7 +196,9 @@ body.dark-mode .create-bill__table-cell--header {
     font-weight: bold;
 }
 
-/* Editable Text */
+/* ==============================
+   Editable Text
+============================== */
 .create-bill__editable-text {
     cursor: pointer;
 }
@@ -218,101 +207,67 @@ body.dark-mode .create-bill__table-cell--header {
     font-weight: bold;
 }
 
-/* Input Fields */
-.create-bill__input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-body.dark-mode .create-bill__input {
-    background-color: #232323;
-    color: #e0e0e0;
-    border: 1px solid #424242;
-}
-
-.create-bill__input--small {
-    width: 80px;
-    padding: 6px;
-}
-
-/* Buttons */
+/* ==============================
+   Buttons
+============================== */
 .create-bill__button {
     padding: 6px 12px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
+    color: white;
+    transition: background-color 0.2s;
 }
 
 .create-bill__button--save {
     background-color: #28a745;
-    color: white;
 }
 
 body.dark-mode .create-bill__button--save {
     background-color: #388e3c;
-    color: #e0e0e0;
 }
 
 .create-bill__button--edit {
     background-color: #007bff;
-    color: white;
 }
 
 body.dark-mode .create-bill__button--edit {
     background-color: #1565c0;
-    color: #e0e0e0;
 }
 
 .create-bill__button--delete {
     background-color: #dc3545;
-    color: white;
 }
 
 body.dark-mode .create-bill__button--delete {
     background-color: #b71c1c;
-    color: #e0e0e0;
-}
-
-/* Print Hide */
-@media print {
-    .print-hide {
-        display: none;
-    }
 }
 
 .create-bill__button--print {
     background-color: #6c757d;
-    color: white;
-}
-
-body.dark-mode .create-bill__button--print {
-    background-color: #424242;
-    color: #e0e0e0;
 }
 
 .create-bill__button--print:hover {
     background-color: #5a6268;
-    color: white;
+}
+
+body.dark-mode .create-bill__button--print {
+    background-color: #424242;
 }
 
 body.dark-mode .create-bill__button--print:hover {
     background-color: #616161;
-    color: #e0e0e0;
 }
 
-/* Totals Section */
+/* ==============================
+   Totals Section
+============================== */
 .create-bill__totals {
     width: 400px;
     margin-left: auto;
     margin-top: 30px;
-}
-
-body.dark-mode .create-bill__totals {
-    background-color: #232323;
+    background-color: var(--bg-light);
 }
 
 .create-bill__totals table {
@@ -322,22 +277,13 @@ body.dark-mode .create-bill__totals {
 
 .create-bill__totals td {
     padding: 8px;
-    border: 1px solid #333;
-}
-
-body.dark-mode .create-bill__totals td {
-    border: 1px solid #424242;
-    color: #e0e0e0;
+    border: 1px solid var(--input-border-light);
+    color: var(--text-light);
 }
 
 .create-bill__totals td:first-child {
     font-weight: bold;
-    background-color: #f5f5f5;
-}
-
-body.dark-mode .create-bill__totals td:first-child {
-    background-color: #232323;
-    color: #b0bec5;
+    background-color: var(--table-header-bg-light);
 }
 
 .create-bill__totals .grand-total {
@@ -351,25 +297,23 @@ body.dark-mode .create-bill__totals .grand-total {
     color: #fff;
 }
 
-/* Amount in Words */
+/* ==============================
+   Amount in Words
+============================== */
 .create-bill__amount-in-words {
     margin-top: 30px;
     padding: 15px;
     background-color: #f9f9f9;
-    border: 1px solid #ddd;
+    border: 1px solid var(--input-border-light);
     border-radius: 4px;
     font-size: 16px;
     font-weight: bold;
-    color: #333;
+    color: var(--text-light);
 }
 
-body.dark-mode .create-bill__amount-in-words {
-    background-color: #232323;
-    border: 1px solid #424242;
-    color: #e0e0e0;
-}
-
-/* Thank You Message */
+/* ==============================
+   Thank You Message
+============================== */
 .create-bill__thank-you {
     text-align: center;
     margin-top: 40px;
@@ -378,5 +322,102 @@ body.dark-mode .create-bill__amount-in-words {
 }
 
 body.dark-mode .create-bill__thank-you {
-    color: #b0bec5;
+    color: var(--thankyou-text-dark);
+}
+
+/* ==============================
+   Print Styles
+============================== */
+@media print {
+    .print-hide {
+        display: none;
+    }
+}
+
+/* ==============================
+   Responsive Tweaks
+============================== */
+@media (max-width: 600px) {
+    .create-bill__totals {
+        width: 100%;
+    }
+
+    .controlStyle {
+        flex-direction: column;
+    }
+}
+
+.bill-preview {
+    padding: 40px;
+    font-family: Arial, sans-serif;
+    background-color: #fff;
+}
+
+.bill-header {
+    text-align: center;
+    margin-bottom: 40px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+}
+
+.bill-title {
+    font-size: 12px;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.bill-subtitle {
+    font-size: 24px;
+    margin: 0 0 15px 0;
+    color: #333;
+    font-family: "Perpetua", Georgia, serif;
+}
+
+.bill-store-address {
+    color: #666;
+    line-height: 1.4;
+}
+
+.bill-store-address-line {
+    margin: 5px 0;
+}
+
+.bill-store-contact {
+    color: #666;
+    margin: 10px 0 0 0;
+}
+
+.bill-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.bill-customer {
+    text-align: left;
+}
+
+.bill-section-title {
+    margin: 0 0 10px 0;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.bill-customer-name {
+    margin: 5px 0;
+    font-size: 16px;
+}
+
+.bill-customer-detail {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.bill-metadata {
+    text-align: right;
+}
+
+.bill-metadata-line {
+    margin: 5px 0;
+    font-size: 14px;
 }

@@ -52,8 +52,17 @@ export const fetchAllSanitized = async (table, params = {}) => {
 
 // Update a record in a specified table
 // Update a journal entry
-export const updateRecord = (table, data) =>
-    axios.post(`${API_BASE}/queries/journal/update`, {
+export const check = (table, data) => {
+    console.log({
+        ...data,
+        entry_type: table,  // ensure the entry_type is passed based on table name
+        entry_id: data['id']
+    });
+    updateRecord(table, data);
+}
+
+export const updateRecord = async (table, data) =>
+    axios.post(`${API_BASE}/journal/update`, {
         ...data,
         entry_type: table,  // ensure the entry_type is passed based on table name
         entry_id: data['id']
@@ -61,7 +70,7 @@ export const updateRecord = (table, data) =>
 
 // Delete a journal entry
 export const deleteRecord = (table, id, remark_text = null) =>
-    axios.post(`${API_BASE}/queries/journal/delete`, {
+    axios.post(`${API_BASE}/journal/delete`, {
         entry_type: table,
         entry_id: id,
         remark_text  // Optional, can be used for audit
