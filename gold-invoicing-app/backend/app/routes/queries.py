@@ -22,7 +22,7 @@ def health():
 
 @queries_bp.route("/<table>/all", methods=["GET"])
 def get_all_records(table):
-    try:
+    try:    
         page = int(request.args.get("page", 1))
         page_size = int(request.args.get("page_size", 20))
         sort_by = request.args.get("sort_by")
@@ -30,7 +30,18 @@ def get_all_records(table):
         start_date = request.args.get("start_date")
         end_date = request.args.get("end_date")
 
-        result = get_table_data(table, page, page_size, sort_by, sort_order, start_date, end_date)
+        reserved_keys = {"page", "page_size", "sort_by", "sort_order", "start_date", "end_date"}
+        
+        filters = []
+        params = {}
+
+        # Dynamic filters
+        for key, value in request.args.items():
+            if key not in reserved_keys and value:
+                filters.append(f"{key} = :{key}")
+                params[key] = value
+
+        result = get_table_data(table, filters, params, page, page_size, sort_by, sort_order, start_date, end_date)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

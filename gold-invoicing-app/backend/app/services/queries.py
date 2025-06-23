@@ -28,11 +28,9 @@ def run_paginated_query(query, conn, params={}, page=1, page_size=20, sort_by=No
     return df.to_dict(orient="records")
 
 
-def get_table_data(table_name, page=1, page_size=20, sort_by=None, sort_order='asc', start_date=None, end_date=None):
+def get_table_data(table_name, filters=[], params={}, page=1, page_size=20, sort_by=None, sort_order='asc', start_date=None, end_date=None):
     conn = get_db_connection()
     query = f"SELECT * FROM {table_name}"
-    filters = []
-    params = {}
 
     if start_date and end_date:
         filters.append("dated BETWEEN :start_date AND :end_date")
