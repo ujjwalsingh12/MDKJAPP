@@ -22,24 +22,42 @@ SET row_security = off;
 
 CREATE FUNCTION public.delete_cash_entry(p_id integer, p_gstin text, p_is_debit boolean) RETURNS void
     LANGUAGE plpgsql
-    AS $$
-DECLARE
-    deleted_amount NUMERIC;
-    is_bank_val BOOLEAN;
-BEGIN
-    SELECT amount, bank INTO deleted_amount, is_bank_val FROM cash WHERE id = p_id;
-
-    DELETE FROM cash WHERE id = p_id;
-
-    PERFORM log_journal_entry(
-        p_gstin := p_gstin,
-        p_entry_type := 'cash_delete',
-        p_is_debit := p_is_debit,
-        p_amount := deleted_amount,
-        p_linked_row_id := p_id::TEXT,
-        p_is_bank := is_bank_val
-    );
-END;
+    AS $$
+
+DECLARE
+
+    deleted_amount NUMERIC;
+
+    is_bank_val BOOLEAN;
+
+BEGIN
+
+    SELECT amount, bank INTO deleted_amount, is_bank_val FROM cash WHERE id = p_id;
+
+
+
+    DELETE FROM cash WHERE id = p_id;
+
+
+
+    PERFORM log_journal_entry(
+
+        p_gstin := p_gstin,
+
+        p_entry_type := 'cash_delete',
+
+        p_is_debit := p_is_debit,
+
+        p_amount := deleted_amount,
+
+        p_linked_row_id := p_id::TEXT,
+
+        p_is_bank := is_bank_val
+
+    );
+
+END;
+
 $$;
 
 
@@ -51,36 +69,66 @@ ALTER FUNCTION public.delete_cash_entry(p_id integer, p_gstin text, p_is_debit b
 
 CREATE FUNCTION public.log_journal_entry(p_gstin text, p_entry_type text, p_is_debit boolean, p_amount numeric DEFAULT NULL::numeric, p_remark_id text DEFAULT NULL::text, p_dated date DEFAULT CURRENT_DATE, p_linked_row_id text DEFAULT NULL::text, p_is_bank boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
-    AS $$
-DECLARE
-    actual_amount NUMERIC;
-BEGIN
-    -- If amount is not provided, try fetching from related table
-    IF p_amount IS NULL THEN
-        CASE p_entry_type
-            WHEN 'cash' THEN
-                SELECT amount INTO actual_amount FROM cash WHERE id = p_linked_row_id::INT;
-            WHEN 'stock' THEN
-                SELECT weight INTO actual_amount FROM stock WHERE id = p_linked_row_id::INT;
-            WHEN 'gold' THEN
-                SELECT weight INTO actual_amount FROM gold WHERE id = p_linked_row_id::INT;
-            WHEN 'bill' THEN
-                SELECT weight * rate INTO actual_amount FROM bill WHERE id = p_linked_row_id::INT;
-            ELSE
-                RAISE EXCEPTION 'Unknown entry_type or amount missing';
-        END CASE;
-    ELSE
-        actual_amount := p_amount;
-    END IF;
-
-    -- Insert into journal_entry
-    INSERT INTO journal_entry (
-        gstin, entry_type, amount, remark_id, dated, linked_row_id, is_bank, is_debit
-    )
-    VALUES (
-        p_gstin, p_entry_type, actual_amount, p_remark_id, p_dated, p_linked_row_id, p_is_bank, p_is_debit
-    );
-END;
+    AS $$
+
+DECLARE
+
+    actual_amount NUMERIC;
+
+BEGIN
+
+    -- If amount is not provided, try fetching from related table
+
+    IF p_amount IS NULL THEN
+
+        CASE p_entry_type
+
+            WHEN 'cash' THEN
+
+                SELECT amount INTO actual_amount FROM cash WHERE id = p_linked_row_id::INT;
+
+            WHEN 'stock' THEN
+
+                SELECT weight INTO actual_amount FROM stock WHERE id = p_linked_row_id::INT;
+
+            WHEN 'gold' THEN
+
+                SELECT weight INTO actual_amount FROM gold WHERE id = p_linked_row_id::INT;
+
+            WHEN 'bill' THEN
+
+                SELECT weight * rate INTO actual_amount FROM bill WHERE id = p_linked_row_id::INT;
+
+            ELSE
+
+                RAISE EXCEPTION 'Unknown entry_type or amount missing';
+
+        END CASE;
+
+    ELSE
+
+        actual_amount := p_amount;
+
+    END IF;
+
+
+
+    -- Insert into journal_entry
+
+    INSERT INTO journal_entry (
+
+        gstin, entry_type, amount, remark_id, dated, linked_row_id, is_bank, is_debit
+
+    )
+
+    VALUES (
+
+        p_gstin, p_entry_type, actual_amount, p_remark_id, p_dated, p_linked_row_id, p_is_bank, p_is_debit
+
+    );
+
+END;
+
 $$;
 
 
@@ -160,7 +208,6 @@ ALTER FUNCTION public.unified_delete_journal_entry(p_entry_type character varyin
 --
 -- Name: unified_insert_journal_entry(character varying, character varying, boolean, date, boolean, text, text, text, numeric, numeric, numeric, numeric, numeric, numeric, numeric); Type: FUNCTION; Schema: public; Owner: postgres
 --
-
 CREATE FUNCTION public.unified_insert_journal_entry(p_entry_type character varying, p_gstin character varying, p_is_debit boolean, p_dated date DEFAULT CURRENT_DATE, p_bank boolean DEFAULT false, p_remark_text text DEFAULT NULL::text, p_bill_no text DEFAULT NULL::text, p_purity text DEFAULT NULL::text, p_wt numeric DEFAULT NULL::numeric, p_rate numeric DEFAULT NULL::numeric, p_cgst numeric DEFAULT NULL::numeric, p_sgst numeric DEFAULT NULL::numeric, p_igst numeric DEFAULT NULL::numeric, p_weight numeric DEFAULT NULL::numeric, p_cash_amount numeric DEFAULT NULL::numeric) RETURNS TABLE(journal_ts timestamp without time zone, returned_entry_type character varying, returned_entry_id integer, returned_amount numeric, returned_remark_id integer, returned_is_debit boolean)
     LANGUAGE plpgsql
     AS $$
@@ -204,41 +251,51 @@ BEGIN
     
     -- Validate entry_type specific requirements
     v_step_counter := v_step_counter + 1;
-    RAISE NOTICE '[STEP %] Validating entry_type specific requirements', v_step_counter;
-    
-    CASE p_entry_type
-        WHEN 'bill' THEN
-            IF p_bill_no IS NULL OR TRIM(p_bill_no) = '' THEN
-                RAISE EXCEPTION 'bill_no is required for bill entries';
-            END IF;
-            IF p_wt IS NULL OR p_wt <= 0 THEN
-                RAISE EXCEPTION 'weight (wt) must be positive for bill entries';
-            END IF;
-            IF p_rate IS NULL OR p_rate <= 0 THEN
-                RAISE EXCEPTION 'rate must be positive for bill entries';
-            END IF;
-            
-        WHEN 'cash' THEN
-            IF p_cash_amount IS NULL OR p_cash_amount = 0 THEN
-                RAISE EXCEPTION 'cash_amount is required and must be non-zero for cash entries';
-            END IF;
-            
-        WHEN 'stock', 'gold' THEN
-            IF p_weight IS NULL OR p_weight <= 0 THEN
-                RAISE EXCEPTION 'weight must be positive for % entries', p_entry_type;
-            END IF;
-            
-        WHEN 'remarks' THEN
-            IF p_remark_text IS NULL OR TRIM(p_remark_text) = '' THEN
-                RAISE EXCEPTION 'remark_text is required for remarks entries';
-            END IF;
-            
-        ELSE
-            RAISE EXCEPTION 'Unknown entry_type: %. Valid types are: bill, cash, stock, gold, remarks', p_entry_type;
-    END CASE;
-    
-    RAISE NOTICE '[STEP %] Entry type validation passed for: %', v_step_counter, p_entry_type;
-    
+    -- Validate entry_type
+IF p_entry_type NOT IN ('bill', 'cash', 'stock', 'gold', 'remarks') THEN
+    RAISE EXCEPTION 'Invalid p_entry_type received: %', p_entry_type;
+END IF;
+
+RAISE NOTICE '[DEBUG] Normalized entry_type is: %', p_entry_type;
+
+-- Validate entry_type specific requirements
+v_step_counter := v_step_counter + 1;
+RAISE NOTICE '[STEP %] Validating entry_type specific requirements', v_step_counter;
+
+CASE p_entry_type
+    WHEN 'bill' THEN
+        IF p_bill_no IS NULL OR TRIM(p_bill_no) = '' THEN
+            RAISE EXCEPTION 'bill_no is required for bill entries';
+        END IF;
+        IF p_wt IS NULL OR p_wt <= 0 THEN
+            RAISE EXCEPTION 'weight (wt) must be positive for bill entries';
+        END IF;
+        IF p_rate IS NULL OR p_rate <= 0 THEN
+            RAISE EXCEPTION 'rate must be positive for bill entries';
+        END IF;
+
+    WHEN 'cash' THEN
+        IF p_cash_amount IS NULL OR p_cash_amount = 0 THEN
+            RAISE EXCEPTION 'cash_amount is required and must be non-zero for cash entries';
+        END IF;
+
+    WHEN 'stock' THEN
+        IF p_weight IS NULL OR p_weight <= 0 THEN
+            RAISE EXCEPTION 'weight must be positive for stock entries';
+        END IF;
+
+    WHEN 'gold' THEN
+        IF p_weight IS NULL OR p_weight <= 0 THEN
+            RAISE EXCEPTION 'weight must be positive for gold entries';
+        END IF;
+
+    WHEN 'remarks' THEN
+        IF p_remark_text IS NULL OR TRIM(p_remark_text) = '' THEN
+            RAISE EXCEPTION 'remark_text is required for remarks entries';
+        END IF;
+END CASE;
+
+RAISE NOTICE '[STEP %] Entry type validation passed for: %', v_step_counter, p_entry_type;
     -- Handle remark insertion
     IF p_remark_text IS NOT NULL AND TRIM(p_remark_text) != '' THEN
         v_step_counter := v_step_counter + 1;
@@ -265,55 +322,61 @@ BEGIN
     
     BEGIN
         CASE p_entry_type
-            WHEN 'bill' THEN
-                RAISE NOTICE '[STEP %] Inserting bill: bill_no=%, purity=%, wt=%, rate=%, dated=%, bank=%, is_debit=%', 
-                    v_step_counter, p_bill_no, p_purity, p_wt, p_rate, p_dated, p_bank, p_is_debit;
-                
-                INSERT INTO bill (bill_no, gstin, purity, wt, rate, dated, bank, is_debit)
-                VALUES (TRIM(p_bill_no), p_gstin, p_purity, p_wt, p_rate, p_dated, p_bank, p_is_debit)
-                RETURNING id INTO v_entry_id;
-                
-                v_amount := p_wt * p_rate;
-                RAISE NOTICE '[STEP %] Bill inserted successfully: id=%, calculated_amount=%, is_debit=%', 
-                    v_step_counter, v_entry_id, v_amount, p_is_debit;
-                
-            WHEN 'cash' THEN
-                RAISE NOTICE '[STEP %] Inserting cash: amount=%, dated=%, bank=%, is_debit=%', 
-                    v_step_counter, p_cash_amount, p_dated, p_bank, p_is_debit;
-                
-                INSERT INTO cash (gstin, amount, dated, bank, is_debit)
-                VALUES (p_gstin, p_cash_amount, p_dated, p_bank, p_is_debit)
-                RETURNING id INTO v_entry_id;
-                
-                v_amount := p_cash_amount;
-                RAISE NOTICE '[STEP %] Cash inserted successfully: id=%, amount=%, is_debit=%', 
-                    v_step_counter, v_entry_id, v_amount, p_is_debit;
-                
-            WHEN 'stock', 'gold' THEN
-                RAISE NOTICE '[STEP %] Inserting %: purity=%, weight=%, dated=%, bank=%, is_debit=%', 
-                    v_step_counter, p_entry_type, p_purity, p_weight, p_dated, p_bank, p_is_debit;
-                
-                IF p_entry_type = 'stock' THEN
-                    INSERT INTO stock (gstin, purity, weight, dated, bank, is_debit)
-                    VALUES (p_gstin, p_purity, p_weight, p_dated, p_bank, p_is_debit)
-                    RETURNING id INTO v_entry_id;
-                ELSE
-                    INSERT INTO gold (gstin, purity, weight, dated, is_bank, is_debit)
-                    VALUES (p_gstin, p_purity, p_weight, p_dated, p_bank, p_is_debit)
-                    RETURNING id INTO v_entry_id;
-                END IF;
-                
-                v_amount := p_weight;
-                RAISE NOTICE '[STEP %] % inserted successfully: id=%, weight=%, is_debit=%', 
-                    v_step_counter, p_entry_type, v_entry_id, v_amount, p_is_debit;
-                
-            WHEN 'remarks' THEN
-                RAISE NOTICE '[STEP %] Processing remarks entry', v_step_counter;
-                v_entry_id := v_remark;
-                v_amount := NULL;
-                RAISE NOTICE '[STEP %] Remarks entry processed: entry_id=%, amount=%', 
-                    v_step_counter, v_entry_id, v_amount;
-        END CASE;
+    WHEN 'bill' THEN
+        RAISE NOTICE '[STEP %] Inserting bill: bill_no=%, purity=%, wt=%, rate=%, dated=%, bank=%, is_debit=%', 
+            v_step_counter, p_bill_no, p_purity, p_wt, p_rate, p_dated, p_bank, p_is_debit;
+
+        INSERT INTO bill (bill_no, gstin, purity, wt, rate, dated, bank, is_debit)
+        VALUES (TRIM(p_bill_no), p_gstin, p_purity, p_wt, p_rate, p_dated, p_bank, p_is_debit)
+        RETURNING id INTO v_entry_id;
+
+        v_amount := p_wt * p_rate;
+        RAISE NOTICE '[STEP %] Bill inserted successfully: id=%, calculated_amount=%, is_debit=%', 
+            v_step_counter, v_entry_id, v_amount, p_is_debit;
+
+    WHEN 'cash' THEN
+        RAISE NOTICE '[STEP %] Inserting cash: amount=%, dated=%, bank=%, is_debit=%', 
+            v_step_counter, p_cash_amount, p_dated, p_bank, p_is_debit;
+
+        INSERT INTO cash (gstin, amount, dated, bank, is_debit)
+        VALUES (p_gstin, p_cash_amount, p_dated, p_bank, p_is_debit)
+        RETURNING id INTO v_entry_id;
+
+        v_amount := p_cash_amount;
+        RAISE NOTICE '[STEP %] Cash inserted successfully: id=%, amount=%, is_debit=%', 
+            v_step_counter, v_entry_id, v_amount, p_is_debit;
+
+    WHEN 'stock' THEN
+        RAISE NOTICE '[STEP %] Inserting into STOCK table: purity=%, weight=%, dated=%, bank=%, is_debit=%', 
+            v_step_counter, p_purity, p_weight, p_dated, p_bank, p_is_debit;
+
+        INSERT INTO stock (gstin, purity, weight, dated, bank, is_debit)
+        VALUES (p_gstin, p_purity, p_weight, p_dated, p_bank, p_is_debit)
+        RETURNING id INTO v_entry_id;
+
+        v_amount := p_weight;
+        RAISE NOTICE '[STEP %] Stock inserted successfully: id=%, weight=%, is_debit=%', 
+            v_step_counter, v_entry_id, v_amount, p_is_debit;
+
+    WHEN 'gold' THEN
+        RAISE NOTICE '[STEP %] Inserting into GOLD table: purity=%, weight=%, dated=%, bank=%, is_debit=%', 
+            v_step_counter, p_purity, p_weight, p_dated, p_bank, p_is_debit;
+
+        INSERT INTO gold (gstin, purity, weight, dated, is_bank, is_debit)
+        VALUES (p_gstin, p_purity, p_weight, p_dated, p_bank, p_is_debit)
+        RETURNING id INTO v_entry_id;
+
+        v_amount := p_weight;
+        RAISE NOTICE '[STEP %] Gold inserted successfully: id=%, weight=%, is_debit=%', 
+            v_step_counter, v_entry_id, v_amount, p_is_debit;
+
+    WHEN 'remarks' THEN
+        RAISE NOTICE '[STEP %] Processing remarks entry', v_step_counter;
+        v_entry_id := v_remark;
+        v_amount := NULL;
+        RAISE NOTICE '[STEP %] Remarks entry processed: entry_id=%, amount=%', 
+            v_step_counter, v_entry_id, v_amount;
+END CASE;
         
     EXCEPTION
         WHEN unique_violation THEN
@@ -525,21 +588,36 @@ ALTER FUNCTION public.unified_update_journal_entry(p_entry_type character varyin
 
 CREATE FUNCTION public.update_cash_entry(p_id integer, p_amount numeric, p_is_bank boolean, p_gstin text, p_is_debit boolean) RETURNS void
     LANGUAGE plpgsql
-    AS $$
-BEGIN
-    UPDATE cash
-    SET amount = p_amount, bank = p_is_bank, is_debit = p_is_debit
-    WHERE id = p_id;
-
-    PERFORM log_journal_entry(
-        p_gstin := p_gstin,
-        p_entry_type := 'cash',
-        p_is_debit := p_is_debit,
-        p_amount := p_amount,
-        p_linked_row_id := p_id::TEXT,
-        p_is_bank := p_is_bank
-    );
-END;
+    AS $$
+
+BEGIN
+
+    UPDATE cash
+
+    SET amount = p_amount, bank = p_is_bank, is_debit = p_is_debit
+
+    WHERE id = p_id;
+
+
+
+    PERFORM log_journal_entry(
+
+        p_gstin := p_gstin,
+
+        p_entry_type := 'cash',
+
+        p_is_debit := p_is_debit,
+
+        p_amount := p_amount,
+
+        p_linked_row_id := p_id::TEXT,
+
+        p_is_bank := p_is_bank
+
+    );
+
+END;
+
 $$;
 
 

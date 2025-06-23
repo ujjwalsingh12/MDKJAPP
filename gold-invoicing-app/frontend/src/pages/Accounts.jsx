@@ -156,7 +156,7 @@ export default function Accounts() {
                         </div>
                         <ViewTables
                             tableName="journal"
-                            initialParams={{ page: 1, page_size: 1000 }}
+                            initialParams={{ page: 1, page_size: 1000, gstin: selectedCustomer.gstin }}
                         // render={(data) => {
                         //     const filteredEntries = data.filter(entry => entry.gstin === selectedCustomer.gstin);
 

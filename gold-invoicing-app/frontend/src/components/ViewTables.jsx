@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { fetchAll, updateRecord, check } from "../api/index"; // Import updateRecord
-import { fetchTableSchema } from "../api/index"; // Import the function to fetch table schema
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Import Bootstrap JS
-import './ViewTables.css'; // Import custom CSS for styling
+import { fetchAll, updateRecord, check, fetchTableSchema } from "../api/index";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import './ViewTables.css';
 
 const DataRow = ({
     row,
@@ -23,20 +21,17 @@ const DataRow = ({
         onMouseEnter={() => handleRowHover(rowIndex)}
     >
         <td></td>
-        {tableLayout.map((column, i) => (
+        {tableLayout.map((column) => (
             <td key={column.key} className="view-tables__cell">
                 {row.isEditing && column.editable ? (
                     <input
                         type={column.type === 'number' ? 'number' : 'text'}
                         className="view-tables__input"
                         value={row[column.key] || ""}
-                        // onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
-                        onChange={(e) => row[column.key] = e.target.value}
+                        onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
                     />
                 ) : (
-                    row[column.key] === null || row[column.key] === undefined || row[column.key] === ""
-                        ? "N/A" // Handle null or missing values
-                        : row[column.key]
+                    row[column.key] ?? "N/A"
                 )}
             </td>
         ))}
@@ -58,7 +53,6 @@ const DataRow = ({
     </tr>
 );
 
-// Table Component
 const DataTable = ({
     data,
     handleCellChange,
@@ -100,7 +94,7 @@ const DataTable = ({
                     handleCancelClick={handleCancelClick}
                     selectedRowIndex={selectedRowIndex}
                     handleRowHover={handleRowHover}
-                    tableLayout={tableLayout} // Pass tableLayout
+                    tableLayout={tableLayout}
                 />
             ))}
         </tbody>
@@ -109,8 +103,8 @@ const DataTable = ({
 
 const ViewTables = ({ tableName, initialParams = {} }) => {
     const [data, setData] = useState([]);
-    const [sdata, setsData] = useState([]); // State for storing original data
-    const [tableLayout, setTableLayout] = useState([]); // Dynamic table layout
+    const [sdata, setsData] = useState([]);
+    const [tableLayout, setTableLayout] = useState([]);
     const [selectedRowIndex, setSelectedRowIndex] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -122,7 +116,6 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         ...initialParams,
     });
 
-    // Fetch schema for the table
     const fetchSchema = async () => {
         try {
             const response = await fetchTableSchema(tableName);
@@ -140,7 +133,6 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         }
     };
 
-    // Fetch data for the table
     const fetchData = async () => {
         setLoading(true);
         setError(null);
@@ -148,23 +140,18 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
             const response = await fetchAll(tableName, params);
             if (Array.isArray(response.data)) {
                 setData(response.data);
-                setsData(response.data); // Store original data
-
+                setsData(JSON.parse(JSON.stringify(response.data)));
             } else {
-                console.error(`Unexpected data format for table: ${tableName}`, response.data);
                 setData([]);
             }
         } catch (err) {
-            console.error(`Error fetching data for table: ${tableName}`, err);
             setError(err.message || "Failed to fetch data");
         } finally {
             setLoading(false);
         }
     };
 
-    // Handle tableName change
     useEffect(() => {
-        // Reset state when tableName changes
         setData([]);
         setsData([]);
         setTableLayout([]);
@@ -176,13 +163,10 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
             sort_order: "asc",
             ...initialParams,
         });
-
-        // Fetch schema and data for the new table
         fetchSchema();
         fetchData();
-    }, [tableName]); // Re-run when tableName changes
+    }, [tableName]);
 
-    // Handle params change (e.g., pagination, sorting)
     useEffect(() => {
         fetchData();
     }, [params]);
@@ -195,7 +179,7 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         }));
     };
 
-    const handlePageChange = async (newPage) => {
+    const handlePageChange = (newPage) => {
         setParams((prev) => ({ ...prev, page: newPage }));
     };
 
@@ -204,71 +188,40 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
         setParams((prev) => ({ ...prev, page_size: newPageSize }));
     };
 
-    const handleCellChange = async (rowIndex, columnKey, value) => {
-        // const newData = [...data];
-        // const snewData = [...sdata];
-        // data[rowIndex][columnKey] = value;
-        // snewData[rowIndex][columnKey] = value;
-        // delete snewData[rowIndex].isEditing;
-        // setData(newData);
-        // setsData(snewData);
+    const handleCellChange = (rowIndex, columnKey, value) => {
+        const newData = [...data];
+        newData[rowIndex] = { ...newData[rowIndex], [columnKey]: value };
+        setData(newData);
     };
 
-    const handleRowHover = async (rowIndex) => {
-        try {
-            setSelectedRowIndex(rowIndex);
-        } catch (err) {
-            console.error(`Error handling row hover for row: ${rowIndex}`, err);
-        }
+    const handleRowHover = (rowIndex) => {
+        setSelectedRowIndex(rowIndex);
     };
 
-    // Dedicated function for handling save operation
     const handleSaveClick = async (rowIndex) => {
-        const row = data[rowIndex];
+        const cleanRowData = { ...data[rowIndex] };
+        delete cleanRowData.isEditing;
 
         try {
-            // Create a copy of the row data without the editing flags
-            const cleanRowData = row;
-            delete cleanRowData.isEditing;
-            // delete cleanRowData.original;
-
-            // Call the updateRecord function with tableName and clean data
-            console.log('clean', cleanRowData);
             await check(tableName, cleanRowData);
-
-            // Update the local state
-            // const newData = [...data];
-            data[rowIndex].isEditing = false;
-            // delete newData[rowIndex].original;
-            // setData(Data);
-
-            // Optionally refresh the data from server
-
             alert('Record updated successfully');
             await fetchData();
-
         } catch (error) {
-            console.error('Error updating row:', error);
             setError('Failed to update record. Please try again.');
         }
     };
 
-    // Function for handling edit button click (to enter edit mode)
-    const handleEditClick = async (rowIndex) => {
-        setsData(data);
-        data[rowIndex].isEditing = true;
-        // Store original data for cancel functionality
-        // newData[rowIndex].original = { ...newData[rowIndex] };
-        // setData(newData);
+    const handleEditClick = (rowIndex) => {
+        const newData = [...data];
+        newData[rowIndex].isEditing = true;
+        setData(newData);
+        setsData(JSON.parse(JSON.stringify(data)));
     };
 
-    const handleCancelClick = async (rowIndex) => {
-        // const newData = [...data];
-        // newData[rowIndex] = { ...newData[rowIndex].original }; // Restore original data
-        // newData[rowIndex].isEditing = false; // Reset editing state
-        // delete newData[rowIndex].original; // Clean up
-        data[rowIndex].isEditing = false;
-        setData(sdata);
+    const handleCancelClick = (rowIndex) => {
+        const restored = JSON.parse(JSON.stringify(sdata));
+        restored[rowIndex].isEditing = false;
+        setData(restored);
     };
 
     return (
