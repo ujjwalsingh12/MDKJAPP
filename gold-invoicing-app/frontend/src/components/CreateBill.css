@@ -309,16 +309,7 @@ body.dark-mode .create-bill__totals .grand-total {
 /* ==============================
    Amount in Words
 ============================== */
-.create-bill__amount-in-words {
-    margin-top: 10px;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border: 1px solid var(--input-border-light);
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    color: var(--text-light);
-}
+
 
 .bill-totals-container {
     /* width: 400px; */
@@ -367,7 +358,7 @@ body.dark-mode .create-bill__totals .grand-total {
     padding: 12px;
     font-weight: bold;
     font-size: 18px;
-    background-color: #f0f0f0;
+    background-color: #d4af37;
     /* border: 2px solid #333; */
 }
 
@@ -620,6 +611,7 @@ body.dark-mode .bill-preview {
     .create-bill__table {
         width: 100%;
         border-collapse: collapse;
+        /* background-color: table-header-bg-light !important; */
         margin-top: 10px;
         font-size: 12px;
         flex-shrink: 1;
@@ -632,7 +624,7 @@ body.dark-mode .bill-preview {
     .create-bill__table-cell,
     .create-bill__table-cell--header {
         margin: 5px;
-
+        background-color: var(--table-header-bg-light);
         border: 1px solid #ccc !important;
         padding: 6px 8px;
         vertical-align: center;
@@ -642,8 +634,9 @@ body.dark-mode .bill-preview {
     }
 
     .create-bill__table th,
+    .create-bill__table-head,
     .amount_in_words {
-        background-color: #fdf6ec;
+        background-color: var(--table-header-bg-light) !important;
         color: #333;
         font-weight: bold;
     }
@@ -697,16 +690,16 @@ body.dark-mode .bill-preview {
     }
 
     .grand-total-label {
-        background-color: #d4af37;
-        color: white;
+        background-color: #d4af37 !important;
+        color: white !important;
         font-weight: bold;
         font-size: 14px;
         padding: 10px;
     }
 
     .grand-total-value {
-        background-color: #d4af37;
-        color: white;
+        background-color: #d4af37 !important;
+        color: white !important;
         text-align: right;
         font-weight: bold;
         font-size: 14px;
@@ -717,14 +710,14 @@ body.dark-mode .bill-preview {
     .amount-in-words {
         margin-top: 13px;
         padding: 8px 16px;
-        background: #fcf8f2;
         border: 1px solid #e0dcd2;
+        background-color: var(--table-header-bg-light) !important;
         border-left: 5px solid #d4af37;
         border-radius: 4px;
 
         font-size: 13px;
         color: #4a4a4a;
-        box-shadow: 0 0 2px rgba(0, 0, 0, 0.04);
+        /* box-shadow: 0 0 2px rgba(0, 0, 0, 0.04); */
     }
 
     .amount-in-words strong {
