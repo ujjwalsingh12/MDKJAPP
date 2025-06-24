@@ -36,6 +36,7 @@ const CreateBill = () => {
           page_size: 100
         });
         setCustomers(response.data); // Assuming backend returns `{ records: [...] }`
+        // console.log(customers);
       } catch (err) {
         console.error('Error loading customers:', err);
       } finally {
@@ -49,8 +50,7 @@ const CreateBill = () => {
   const filteredCustomers = useMemo(() => {
     if (!customerSearchTerm) return customers;
     return customers.filter(customer =>
-      customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-      customer.phone.includes(customerSearchTerm)
+      customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase())
     );
   }, [customerSearchTerm]);
 
@@ -326,18 +326,24 @@ const CreateBill = () => {
             />
             {showCustomerDropdown && (
               <div className="create-bill__dropdown">
-                {filteredCustomers.map((customer) => (
-                  <div
-                    key={customer.id}
-                    className="create-bill__dropdown-item"
-                    onClick={() => handleCustomerSelect(customer)}
-                    onMouseEnter={(e) => e.target.classList.add('create-bill__dropdown-item--hover')}
-                    onMouseLeave={(e) => e.target.classList.remove('create-bill__dropdown-item--hover')}
-                  >
-                    <strong>{customer.name}</strong><br />
-                    <small>{customer.phone}</small>
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map((customer) => (
+                    <div
+                      key={customer.id}
+                      className="create-bill__dropdown-item"
+                      onClick={() => handleCustomerSelect(customer)}
+                      onMouseEnter={(e) => e.target.classList.add('create-bill__dropdown-item--hover')}
+                      onMouseLeave={(e) => e.target.classList.remove('create-bill__dropdown-item--hover')}
+                    >
+                      <strong>{customer.name}</strong><br />
+                      <small>{customer.phone}</small>
+                    </div>
+                  ))
+                ) : (
+                  <div className="create-bill__dropdown-item" style={{ color: '#888', fontStyle: 'italic' }}>
+                    No matching customers
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>

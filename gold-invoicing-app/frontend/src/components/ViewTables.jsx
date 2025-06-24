@@ -4,6 +4,24 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './ViewTables.css';
 
+const formatFriendlyDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const sameDay = (d1, d2) => (
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()
+    );
+
+    if (sameDay(date, today)) return "Today";
+    if (sameDay(date, yesterday)) return "Yesterday";
+    return date.toLocaleDateString();
+};
+
 const DataRow = ({
     row,
     rowIndex,
@@ -25,13 +43,19 @@ const DataRow = ({
             <td key={column.key} className="view-tables__cell">
                 {row.isEditing && column.editable ? (
                     <input
-                        type={column.type === 'number' ? 'number' : 'text'}
+                        type={
+                            column.type === 'number' ? 'number' :
+                                column.type === 'date' ? 'date' :
+                                    'text'
+                        }
                         className="view-tables__input"
                         value={row[column.key] || ""}
                         onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
                     />
                 ) : (
-                    row[column.key] ?? "N/A"
+                    column.type === 'date'
+                        ? formatFriendlyDate(row[column.key])
+                        : (row[column.key] ?? "N/A")
                 )}
             </td>
         ))}
@@ -111,8 +135,8 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
     const [params, setParams] = useState({
         page: 1,
         page_size: 10,
-        sort_by: null,
-        sort_order: "asc",
+        sort_by: 'id',
+        sort_order: "desc",
         ...initialParams,
     });
 
@@ -123,7 +147,10 @@ const ViewTables = ({ tableName, initialParams = {} }) => {
             const layout = schema.map((column) => ({
                 key: column.column_name,
                 label: column.column_name.toUpperCase(),
-                type: column.data_type === "integer" || column.data_type === "numeric" ? "number" : "text",
+                type:
+                    column.data_type === "integer" || column.data_type === "numeric" ? "number" :
+                        column.data_type === "date" || column.data_type === "timestamp without time zone" ? "date" :
+                            "text",
                 editable: true,
             }));
             setTableLayout(layout);

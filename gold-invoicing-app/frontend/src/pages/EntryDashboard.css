@@ -2,262 +2,362 @@
 body {
     font-family: 'Roboto', Arial, sans-serif;
     background-color: #f5f5f5;
+    /* Light background */
     color: #202124;
+    /* Dark text */
     margin: 0;
     padding: 0;
 }
 
-
 body.dark-mode {
     background-color: #121212;
+    /* Dark mode body background */
     color: #e0e0e0;
+    /* Light text for dark mode */
 }
 
 .entry-dashboard__container {
-    display: flex;
+    /* display: flex; */
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 20px;
     background-color: #ffffff;
+    /* White container background */
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow */
+    margin: 20px auto;
+    /* Center the container with some top/bottom margin */
+    max-width: 900px;
+    /* Limit container width for better readability */
 }
 
 body.dark-mode .entry-dashboard__container {
     background-color: #1e1e1e;
+    /* Dark mode container background */
     box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
-}
-
-.container {
-    /* max-width: 960px; */
-    margin: 0 auto;
-    padding: 20px;
+    /* Subtle white shadow for dark mode */
 }
 
 /* Title */
 .entry-dashboard__title {
-    font-size: 24px;
+    font-size: 28px;
+    /* Slightly larger title */
     font-weight: 500;
     color: #1a73e8;
-    margin-bottom: 20px;
+    /* Google blue */
+    margin-bottom: 25px;
+    /* More space below title */
     text-align: center;
 }
 
 body.dark-mode .entry-dashboard__title {
     color: #90caf9;
+    /* Lighter blue for dark mode */
 }
 
 /* Form Styles */
 .entry-dashboard__form {
     background-color: #ffffff;
+    /* White form background */
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 25px;
+    /* Increased padding */
+    margin-bottom: 30px;
+    /* More space below form */
+    /* width: 100%; */
+    /* Ensure form takes full width of its container */
+    box-sizing: border-box;
+    /* Include padding in width calculation */
 }
 
 body.dark-mode .entry-dashboard__form {
     background-color: #1e1e1e;
+    /* Dark mode form background */
     box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
 }
 
 .entry-dashboard__field {
     margin-bottom: 20px;
+    position: relative;
+    /* Needed for dropdown positioning */
 }
 
 .entry-dashboard__field label {
     font-size: 14px;
     font-weight: 500;
-    margin: 10px;
     color: #5f6368;
-    /* display: block; */
+    /* Google gray for labels */
+    display: block;
+    /* Ensure label is on its own line */
     margin-bottom: 8px;
 }
 
 body.dark-mode .entry-dashboard__field label {
     color: #b0bec5;
+    /* Lighter gray for dark mode labels */
 }
 
-.entry-dashboard__input {
+.entry-dashboard__input,
+.entry-dashboard__textarea {
     /* width: 100%; */
-    padding: 10px;
-    font-size: 14px;
+    /* Full width inputs */
+    padding: 10px 12px;
+    /* Slightly more horizontal padding */
+    font-size: 15px;
+    /* Slightly larger font size */
     border: 1px solid #dadce0;
+    /* Light gray border */
     border-radius: 4px;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-    transition: border-color 0.2s;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    /* Softer inner shadow */
+    transition: border-color 0.2s, box-shadow 0.2s;
+    /* Smooth transition for focus */
+    box-sizing: border-box;
+    /* Include padding and border in width */
 }
 
-body.dark-mode .entry-dashboard__input {
+body.dark-mode .entry-dashboard__input,
+body.dark-mode .entry-dashboard__textarea {
     background-color: #2c2c2c;
+    /* Dark input background */
     color: #e0e0e0;
+    /* Light input text */
     border: 1px solid #424242;
-    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    /* Darker border */
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
 }
 
-.entry-dashboard__input:focus {
+.entry-dashboard__input:focus,
+.entry-dashboard__textarea:focus {
     border-color: #1a73e8;
+    /* Google blue on focus */
+    box-shadow: 0 0 0 1px #1a73e8;
+    /* Subtle blue outline on focus */
     outline: none;
 }
 
-body.dark-mode .entry-dashboard__input:focus {
+body.dark-mode .entry-dashboard__input:focus,
+body.dark-mode .entry-dashboard__textarea:focus {
     border-color: #90caf9;
+    /* Lighter blue on focus for dark mode */
+    box-shadow: 0 0 0 1px #90caf9;
 }
 
 .entry-dashboard__textarea {
-    /* width: 100%; */
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-    transition: border-color 0.2s;
+    min-height: 80px;
+    /* Minimum height for textarea */
     resize: vertical;
 }
 
-body.dark-mode .entry-dashboard__textarea {
-    background-color: #2c2c2c;
-    color: #e0e0e0;
-    border: 1px solid #424242;
-}
-
-.entry-dashboard__textarea:focus {
-    border-color: #1a73e8;
-    outline: none;
-}
-
-body.dark-mode .entry-dashboard__textarea:focus {
-    border-color: #90caf9;
-}
-
 /* Button Styles */
-.entry-dashboard__button-group {
+.entry-dashboard__button-group,
+.entry-dashboard__button-group-nav {
     /* display: flex; */
-    /* gap: 10px; */
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-    flex-direction: row;
     flex-wrap: wrap;
+    /* Allow wrapping for smaller screens */
+    gap: 10px;
+    /* Space between buttons */
+    margin-bottom: 20px;
+    justify-content: flex-start;
+    /* Align buttons to the start */
+    align-items: center;
 }
 
-.div {
-    margin: 10px;
-    padding: 10px;
+/* Specific styling for the 'div' inside button groups from the React code */
+.entry-dashboard__button-group .div,
+.entry-dashboard__button-group-nav .div {
+    margin: 0;
+    /* Reset margin for these nested divs */
+    padding: 0;
+    /* Reset padding */
+    display: contents;
+    /* Makes the children of this div behave as if they are direct children of the flex container */
 }
 
 .entry-dashboard__button-group-nav {
-    display: flex;
-    gap: 10px;
-    flex-wrap: nowrap;
-    justify-content: center;
     background-color: #f1f3f4;
+    /* Light gray background for nav */
     padding: 10px;
-    border-bottom: 2px solid #dadce0;
+    border-radius: 6px;
+    /* Slightly more rounded */
+    border-bottom: none;
+    /* Remove border-bottom from here */
+    margin-bottom: 20px;
 }
 
 body.dark-mode .entry-dashboard__button-group-nav {
     background-color: #2c2c2c;
-    border-bottom: 2px solid #424242;
-}
-
-.entry-dashboard__button-group-nav .nav-item {
-    padding: 10px 15px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #202124;
-    cursor: pointer;
-    transition: color 0.2s, font-weight 0.2s;
-}
-
-body.dark-mode .entry-dashboard__button-group-nav .nav-item {
-    color: #e0e0e0;
-}
-
-.entry-dashboard__button-group-nav .nav-item:hover {
-    color: #1a73e8;
-}
-
-body.dark-mode .entry-dashboard__button-group-nav .nav-item:hover {
-    color: #90caf9;
-}
-
-.entry-dashboard__button-group-nav .nav-item--active {
-    color: #1a73e8;
-    font-weight: bold;
-    border-bottom: 2px solid #1a73e8;
-}
-
-body.dark-mode .entry-dashboard__button-group-nav .nav-item--active {
-    color: #90caf9;
-    border-bottom: 2px solid #90caf9;
+    /* Dark mode nav background */
+    border-bottom: none;
 }
 
 .entry-dashboard__button {
-    padding: 10px 15px;
+    padding: 10px 18px;
+    /* More padding for buttons */
     font-size: 14px;
     font-weight: 500;
-    color: #202124;
+    color: #3c4043;
+    /* Darker text for default buttons */
     background-color: #f1f3f4;
+    /* Light gray background */
     border: 1px solid #dadce0;
+    /* Light gray border */
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    /* Prevent text wrapping on buttons */
 }
 
 body.dark-mode .entry-dashboard__button {
     background-color: #2c2c2c;
+    /* Dark mode button background */
     color: #e0e0e0;
+    /* Light text for dark mode buttons */
     border: 1px solid #424242;
+    /* Darker border */
 }
 
 .entry-dashboard__button:hover {
     background-color: #e8f0fe;
+    /* Lighter blue on hover */
     color: #1a73e8;
+    /* Google blue on hover */
+    border-color: #c5dafc;
+    /* Lighter blue border on hover */
 }
 
 body.dark-mode .entry-dashboard__button:hover {
     background-color: #424242;
+    /* Darker background on hover for dark mode */
     color: #90caf9;
+    /* Lighter blue on hover for dark mode */
+    border-color: #555555;
 }
 
 .entry-dashboard__button--active {
     background-color: #1a73e8;
+    /* Google blue for active button */
     color: #ffffff;
+    /* White text for active button */
     border-color: #1a73e8;
 }
 
 body.dark-mode .entry-dashboard__button--active {
     background-color: #90caf9;
+    /* Lighter blue for active dark mode button */
     color: #121212;
+    /* Dark text for active dark mode button */
     border-color: #90caf9;
 }
 
+.entry-dashboard__button--debit {
+    background-color: #fce8e6;
+    /* Light red for debit */
+    color: #d93025;
+    /* Dark red text */
+    border-color: #fce8e6;
+}
+
+body.dark-mode .entry-dashboard__button--debit {
+    background-color: #b71c1c;
+    /* Darker red for debit in dark mode */
+    color: #ef9a9a;
+    /* Lighter red text */
+    border-color: #b71c1c;
+}
+
+.entry-dashboard__button--credit {
+    background-color: #e6f4ea;
+    /* Light green for credit */
+    color: #188038;
+    /* Dark green text */
+    border-color: #e6f4ea;
+}
+
+body.dark-mode .entry-dashboard__button--credit {
+    background-color: #2e7d32;
+    /* Darker green for credit in dark mode */
+    color: #a5d6a7;
+    /* Lighter green text */
+    border-color: #2e7d32;
+}
+
+.entry-dashboard__button--bank {
+    background-color: #e0f2f7;
+    /* Light blue for bank */
+    color: #016f9f;
+    /* Darker blue text */
+    border-color: #e0f2f7;
+}
+
+body.dark-mode .entry-dashboard__button--bank {
+    background-color: #014c68;
+    /* Darker blue for bank in dark mode */
+    color: #a7d9ed;
+    /* Lighter blue text */
+    border-color: #014c68;
+}
+
+.entry-dashboard__button--cash {
+    background-color: #fffde7;
+    /* Light yellow for cash */
+    color: #f9ab00;
+    /* Orange text */
+    border-color: #fffde7;
+}
+
+body.dark-mode .entry-dashboard__button--cash {
+    background-color: #8c7b01;
+    /* Darker yellow for cash in dark mode */
+    color: #ffd54f;
+    /* Lighter yellow text */
+    border-color: #8c7b01;
+}
+
 .entry-dashboard__submit-button {
-    /* width: 100%; */
-    padding: 12px;
+    width: auto;
+    /* Allow button to size content */
+    padding: 12px 24px;
+    /* More padding for submit button */
     font-size: 16px;
     font-weight: 500;
     color: #ffffff;
     background-color: #1a73e8;
+    /* Google blue */
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    margin-top: 25px;
+    /* Space above submit button */
+    display: block;
+    /* Take full width for smaller screens, but center */
+    margin-left: auto;
+    margin-right: auto;
 }
 
 body.dark-mode .entry-dashboard__submit-button {
     background-color: #90caf9;
+    /* Lighter blue for dark mode */
     color: #121212;
+    /* Dark text */
 }
 
 .entry-dashboard__submit-button:hover {
     background-color: #174ea6;
+    /* Darker blue on hover */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    /* Subtle shadow on hover */
 }
 
 body.dark-mode .entry-dashboard__submit-button:hover {
     background-color: #64b5f6;
+    /* Darker blue for dark mode hover */
+    box-shadow: 0 1px 3px rgba(255, 255, 255, 0.2);
 }
 
 /* Dropdown Styles */
@@ -266,29 +366,36 @@ body.dark-mode .entry-dashboard__submit-button:hover {
     background-color: #ffffff;
     border: 1px solid #dadce0;
     border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    /* More prominent shadow for dropdown */
     margin-top: 5px;
     max-height: 200px;
     overflow-y: auto;
-    z-index: 10;
-    width: 100%;
-    /* Ensures the dropdown aligns with the width of the field */
+    z-index: 1000;
+    /* High z-index to ensure it's on top */
+    /* width: 100%; */
     left: 0;
-    /* Aligns the dropdown directly below the field */
+    list-style: none;
+    /* Remove bullet points */
+    padding: 0;
+    /* Remove default padding */
 }
 
 body.dark-mode .entry-dashboard__dropdown {
     background-color: #2c2c2c;
+    /* Dark mode dropdown background */
     border: 1px solid #424242;
-    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
+    /* Darker border */
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
 }
 
 .entry-dashboard__dropdown-item {
-    padding: 10px;
+    padding: 10px 15px;
+    /* Slightly more padding */
     font-size: 14px;
     color: #202124;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 body.dark-mode .entry-dashboard__dropdown-item {
@@ -297,31 +404,47 @@ body.dark-mode .entry-dashboard__dropdown-item {
 
 .entry-dashboard__dropdown-item:hover {
     background-color: #f1f3f4;
+    /* Light gray on hover */
+    color: #1a73e8;
+    /* Google blue on hover */
 }
 
 body.dark-mode .entry-dashboard__dropdown-item:hover {
     background-color: #424242;
+    /* Darker background on hover for dark mode */
+    color: #90caf9;
+    /* Lighter blue on hover for dark mode */
 }
 
 /* Summary Section */
 .entry-dashboard__summary {
     background-color: #f8f9fa;
+    /* Light gray background */
     border: 1px solid #dadce0;
+    /* Light gray border */
     border-radius: 4px;
-    padding: 15px;
-    margin-top: 20px;
+    padding: 15px 20px;
+    /* More horizontal padding */
+    margin-top: 30px;
+    /* More space above summary */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 body.dark-mode .entry-dashboard__summary {
-    background-color: #1e1e1e;
+    background-color: #232323;
+    /* Dark mode summary background */
     border: 1px solid #424242;
+    /* Darker border */
 }
 
 .entry-dashboard__summary h5 {
-    font-size: 16px;
+    font-size: 18px;
+    /* Slightly larger heading */
     font-weight: 500;
     color: #202124;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    /* More space below heading */
 }
 
 body.dark-mode .entry-dashboard__summary h5 {
@@ -331,50 +454,132 @@ body.dark-mode .entry-dashboard__summary h5 {
 .entry-dashboard__summary p {
     font-size: 14px;
     color: #5f6368;
-    margin: 5px 0;
+    margin: 6px 0;
+    /* Adjusted vertical margin */
+    line-height: 1.5;
+    /* Improved readability */
 }
 
 body.dark-mode .entry-dashboard__summary p {
     color: #b0bec5;
 }
 
-/* Recent Entries Section */
-.entry-dashboard__recent-title {
-    font-size: 18px;
-    font-weight: 500;
+.entry-dashboard__summary strong {
     color: #202124;
-    margin-top: 20px;
+    /* Ensure strong text is clearly visible */
 }
 
-body.dark-mode .entry-dashboard__recent-title {
+body.dark-mode .entry-dashboard__summary strong {
     color: #e0e0e0;
 }
 
-.entry-dashboard__toggle-button {
-    width: 100%;
-    padding: 10px;
-    font-size: 14px;
+/* Recent Entries Section */
+.entry-dashboard__recent-title {
+    font-size: 22px;
+    /* Consistent with other section titles */
     font-weight: 500;
     color: #1a73e8;
+    /* Google blue */
+    margin-top: 40px;
+    /* More space above this section */
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+body.dark-mode .entry-dashboard__recent-title {
+    color: #90caf9;
+}
+
+.entry-dashboard__toggle-button {
+    width: auto;
+    /* Let button size to content */
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a73e8;
+    /* Google blue */
     background-color: #e8f0fe;
-    border: 1px solid #dadce0;
+    /* Light blue background */
+    border: 1px solid #c5dafc;
+    /* Lighter blue border */
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    margin: 20px auto 30px auto;
+    /* Center button with vertical margin */
+    display: block;
+    /* Ensure it takes its own line for centering */
 }
 
 body.dark-mode .entry-dashboard__toggle-button {
     background-color: #424242;
+    /* Dark mode background */
     color: #90caf9;
-    border: 1px solid #424242;
+    /* Lighter blue text */
+    border: 1px solid #555555;
+    /* Darker border */
 }
 
 .entry-dashboard__toggle-button:hover {
     background-color: #d2e3fc;
+    /* Darker light blue on hover */
     color: #174ea6;
+    /* Darker blue on hover */
+    border-color: #b3d4f8;
 }
 
 body.dark-mode .entry-dashboard__toggle-button:hover {
     background-color: #555555;
+    /* Even darker background on hover */
     color: #64b5f6;
+    /* Even lighter blue on hover */
+    border-color: #666666;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .entry-dashboard__container {
+        padding: 15px;
+        margin: 10px;
+        max-width: unset;
+        /* Remove max-width on small screens */
+    }
+
+    .entry-dashboard__form {
+        padding: 15px;
+    }
+
+    .entry-dashboard__button-group,
+    .entry-dashboard__button-group-nav {
+        flex-direction: column;
+        /* Stack buttons vertically on small screens */
+        align-items: stretch;
+        /* Stretch buttons to full width */
+    }
+
+    .entry-dashboard__button,
+    .entry-dashboard__submit-button,
+    .entry-dashboard__toggle-button {
+        /* width: 100%; */
+        /* Full width buttons on small screens */
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .entry-dashboard__dropdown {
+        position: static;
+        /* Make dropdown flow normally */
+        /* width: 100%; */
+        box-shadow: none;
+        /* Remove shadow if it looks odd without absolute positioning */
+        border: none;
+        max-height: 150px;
+        /* Adjust max height for dropdown */
+    }
+
+    .entry-dashboard__input,
+    .entry-dashboard__textarea {
+        font-size: 14px;
+        /* Slightly smaller font for inputs on small screens */
+    }
 }

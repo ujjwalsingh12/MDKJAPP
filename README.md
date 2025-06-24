@@ -195,3 +195,32 @@ docker exec -it gold_pg psql -U postgres -d gold_db
     ```
 
 ---
+# Gold Invoicing System
+
+This is a self-contained invoicing app with backend (Flask), frontend (React), and PostgreSQL database. Runs fully via Docker.
+
+---
+
+## ✅ Requirements
+
+1. **Install Docker Desktop**  
+   [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+
+2. **(Optional)** Install Git (if using Git instead of zip)
+   [https://git-scm.com/downloads](https://git-scm.com/downloads)
+
+---
+
+## 🛠 Setup Instructions
+
+1. **Download the folder or unzip it**  
+   Place it anywhere on your system.
+
+2. **Rename** `.env.template` → `.env`
+
+3. **Open terminal or command prompt** in the root of the project folder
+
+4. Run the app:
+
+```bash
+docker-compose up --build

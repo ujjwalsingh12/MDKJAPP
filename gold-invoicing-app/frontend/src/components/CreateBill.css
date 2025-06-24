@@ -414,6 +414,10 @@ body.dark-mode .create-bill__thank-you {
     font-size: 12px;
 }
 
+body.dark-mode .bill-preview {
+    background-color: #424242;
+}
+
 .bill-header {
     text-align: center;
     margin-bottom: 40px;
