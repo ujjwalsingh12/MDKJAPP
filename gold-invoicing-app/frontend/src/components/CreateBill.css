@@ -655,7 +655,7 @@ body.dark-mode .bill-preview {
     .bill-totals-container {
         /* margin-top: 20px; */
         border-top: 2px solid #d4af37 !important;
-        padding-top: 10px;
+        padding-top: 1px 20px;
         flex-grow: 0;
     }
 
@@ -674,7 +674,7 @@ body.dark-mode .bill-preview {
     .bill-totals-label,
     .bill-totals-value {
         margin: 1px 20px;
-        padding: 1px 20px;
+        padding: 5px 10px;
         color: #444;
         border: 0px !important;
     }

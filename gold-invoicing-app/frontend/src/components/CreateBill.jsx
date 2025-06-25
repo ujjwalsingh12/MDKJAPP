@@ -660,38 +660,44 @@ const CreateBill = () => {
                       ₹{parseFloat(calculations.igstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                   </tr>
-                  <tr>
+                  {hallmarkingPieces > 0 ?
 
-                    <td id='hallmarking_total_label' className="bill-totals-label">
-                      Hallmarking Charges
-                    </td>
-                    <td id='hallmarking_total_value' className="bill-totals-value right-align">
+                    <>
+                      <tr>
 
-                      ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="bill-totals-label indent">CGST {hallmarkingCgst}%</td>
-                    <td className="bill-totals-value right-align">
-                      ₹{parseFloat(calculations.hallmarkingCgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="bill-totals-label indent">SGST {hallmarkingSgst}%</td>
-                    <td className="bill-totals-value right-align">
-                      ₹{parseFloat(calculations.hallmarkingSgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="bill-totals-label indent">IGST 0.0%</td>
-                    <td className="bill-totals-value right-align">₹0.00</td>
-                  </tr>
-                  <tr>
-                    <td className="bill-totals-label">Round off</td>
-                    <td className="bill-totals-value right-align">
-                      {parseFloat(calculations.roundOff) >= 0 ? '+' : ''}₹{calculations.roundOff}
-                    </td>
-                  </tr>
+                        <td id='hallmarking_total_label' className="bill-totals-label">
+                          Hallmarking Charges
+                        </td>
+                        <td id='hallmarking_total_value' className="bill-totals-value right-align">
+
+                          ₹{parseFloat(calculations.hallmarkingTotal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="bill-totals-label indent">CGST {hallmarkingCgst}%</td>
+                        <td className="bill-totals-value right-align">
+                          ₹{parseFloat(calculations.hallmarkingCgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="bill-totals-label indent">SGST {hallmarkingSgst}%</td>
+                        <td className="bill-totals-value right-align">
+                          ₹{parseFloat(calculations.hallmarkingSgstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="bill-totals-label indent">IGST 0.0%</td>
+                        <td className="bill-totals-value right-align">₹0.00</td>
+                      </tr>
+                      <tr>
+                        <td className="bill-totals-label">Round off</td>
+                        <td className="bill-totals-value right-align">
+                          {parseFloat(calculations.roundOff) >= 0 ? '+' : ''}₹{calculations.roundOff}
+                        </td>
+                      </tr>
+                    </> : ""
+                  }
+
                   <tr>
                     <td className="grand-total-label">Grand Total</td>
                     <td className="grand-total-value right-align">
